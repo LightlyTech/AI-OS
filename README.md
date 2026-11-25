@@ -1,6 +1,6 @@
 # AI OS
 
-Your application allows AI to handle it automatically!
+## Let AI automatically generate applications!
 
 A desktop-style AI workspace that runs in a single HTML file. Describe an app in plain language and the model builds it as a draggable, resizable window on a Windows-like desktop — no build step, no dependencies, no installation.
 
