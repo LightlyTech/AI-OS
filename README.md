@@ -29,7 +29,7 @@ Everything lives in `index.html`: just open it in a browser and start typing.
 
 ## Getting started
 
-1. Download `aios.html`.
+1. Download `index.html`.
 2. Open it in a Chromium-based browser (Edge, Chrome) — double-clicking works, or serve it locally:
 
    ```bash
