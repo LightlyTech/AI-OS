@@ -2,6 +2,10 @@
 
 ## Let AI automatically generate applications!
 
+[![Get From Microsoft](https://get.microsoft.com/images/en-us%20dark.svg)](https://apps.microsoft.com/detail/9PJJC37WP4NJ)
+
+[Online experience](https://lightlytech.github.io/Windows-Themes-Library/)
+
 A desktop-style AI workspace that runs in a single HTML file. Describe an app in plain language and the model builds it as a draggable, resizable window on a Windows-like desktop — no build step, no dependencies, no installation.
 
 Everything lives in `index.html`: just open it in a browser and start typing.
