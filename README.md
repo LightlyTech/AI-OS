@@ -6,7 +6,7 @@
 
 [Online address](https://lightlytech.github.io/AI-OS/)
 
-A desktop-style AI workspace that runs in a single HTML file. Describe an app in plain language and the model builds it as a draggable, resizable window on a Windows-like desktop — no build step, no dependencies, no installation.
+A desktop-style AI workspace that not only lets you chat with AI but also generates apps in real time!Describe an app in plain language and the model builds it as a draggable, resizable window on a Windows-like desktop — no build step, no dependencies, no installation.
 
 Everything lives in `index.html`: just open it in a browser and start typing.
 
