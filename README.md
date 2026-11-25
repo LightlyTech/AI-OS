@@ -4,7 +4,7 @@
 
 [![Get From Microsoft](https://get.microsoft.com/images/en-us%20dark.svg)](https://apps.microsoft.com/detail/9PJJC37WP4NJ)
 
-[Online experience](https://lightlytech.github.io/AI-OS/)
+[Online address](https://lightlytech.github.io/AI-OS/)
 
 A desktop-style AI workspace that runs in a single HTML file. Describe an app in plain language and the model builds it as a draggable, resizable window on a Windows-like desktop — no build step, no dependencies, no installation.
 
