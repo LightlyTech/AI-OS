@@ -2,7 +2,7 @@
 
 ## Let AI automatically generate applications!
 
-[![Get From Microsoft](https://get.microsoft.com/images/en-us%20dark.svg)](https://apps.microsoft.com/detail/9PJJC37WP4NJ)
+[![Get From Microsoft](https://get.microsoft.com/images/en-us%20dark.svg)](https://apps.microsoft.com/detail/9P2VNV3D7KC6)
 
 [Online address](https://lightlytech.github.io/AI-OS/)
 
