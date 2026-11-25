@@ -629,10 +629,10 @@
         <select id="sProvider"></select>
       </label>
       <label class="field">Endpoint
-        <input id="sEndpoint" placeholder="https://api.deepseek.com/v1/chat/completions">
+        <input id="sEndpoint" placeholder="https://api.openai.com/v1/chat/completions">
       </label>
       <label class="field">Model
-        <input id="sModel" placeholder="deepseek-chat">
+        <input id="sModel" placeholder="gpt-4o-mini">
       </label>
       <label class="field">API Key
         <input id="sKey" type="password" placeholder="sk-... (optional for local servers)">
@@ -815,9 +815,9 @@
     { id: 'custom', name: 'Custom (OpenAI-compatible)', group: 'Custom', type: 'openai', endpoint: '', model: '' }
   ];
   var DEFAULT_CFG = {
-    provider: 'deepseek',
-    endpoint: 'https://api.deepseek.com/v1/chat/completions',
-    model: 'deepseek-chat',
+    provider: 'openai',
+    endpoint: 'https://api.openai.com/v1/chat/completions',
+    model: 'gpt-4o-mini',
     key: '',
     enabled: false
   };
