@@ -1,5 +1,7 @@
 # AI OS
 
+Your application allows AI to handle it automatically!
+
 A desktop-style AI workspace that runs in a single HTML file. Describe an app in plain language and the model builds it as a draggable, resizable window on a Windows-like desktop — no build step, no dependencies, no installation.
 
 Everything lives in `index.html`: just open it in a browser and start typing.
