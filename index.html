@@ -90,6 +90,28 @@
   .wbody{position:relative;flex:1;min-height:0;background:#12141c}
   .wbody iframe{width:100%;height:100%;border:0;display:block;background:#12141c}
 
+  .webwrap{position:absolute;inset:0;display:flex;flex-direction:column;background:#12141c}
+  .webbar{flex:none;height:34px;display:flex;align-items:center;gap:10px;padding:0 10px;
+    background:#1b1f2c;border-bottom:1px solid rgba(255,255,255,.08)}
+  .webnav{flex:none;display:flex;align-items:center;gap:2px;margin-right:2px}
+  .webnav button{width:24px;height:22px;border:0;border-radius:5px;background:transparent;
+    color:#a9b5cc;display:grid;place-items:center;cursor:pointer;padding:0}
+  .webnav button:hover{background:rgba(255,255,255,.1);color:#dfe6f5}
+  .webnav button:active{transform:scale(.94)}
+  .webnav button:disabled{opacity:.32;cursor:default;background:transparent;transform:none}
+  body.light .webnav button{color:#5b6474}
+  body.light .webnav button:hover{background:rgba(15,23,42,.08);color:#1f2937}
+  .weburl{flex:1;min-width:0;font-size:11.5px;color:#93a0ba;overflow:hidden;
+    white-space:nowrap;text-overflow:ellipsis}
+  .webopen{flex:none;font-size:11.5px;color:#93b2ff;text-decoration:none;padding:4px 9px;
+    border-radius:6px;border:1px solid rgba(120,160,255,.32);white-space:nowrap}
+  .webopen:hover{background:rgba(80,120,255,.16)}
+  .webwrap iframe{flex:1;min-height:0;height:auto;width:100%;border:0;display:block;background:#fff}
+  body.light .webwrap{background:#fff}
+  body.light .webbar{background:#f3f5fa;border-bottom-color:rgba(15,23,42,.1)}
+  body.light .weburl{color:#5b6474}
+  body.light .webopen{color:#2f5bd0;border-color:rgba(47,91,208,.3)}
+
   .wstate{
     position:absolute;inset:0;display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:7px;padding:28px;
@@ -119,6 +141,22 @@
   .msg.bot{align-self:flex-start;background:#1c2130;border:1px solid rgba(255,255,255,.07);
     color:#dfe6f5;border-bottom-left-radius:4px}
   .msg.bot.pending{color:#8b95ab}
+  .msg .md-h{font-weight:700;line-height:1.5;color:#eef2fb;margin:6px 0 2px}
+  .msg .md-h1{font-size:17px}
+  .msg .md-h2{font-size:15.5px}
+  .msg .md-h3{font-size:14px}
+  .msg .md-h4,.msg .md-h5,.msg .md-h6{font-size:13px}
+  .msg .md-p{margin:2px 0}
+  .msg .md-list{margin:3px 0;padding-left:20px}
+  .msg .md-list li{margin:1px 0}
+  .msg .md-q{border-left:3px solid rgba(120,160,255,.45);padding-left:10px;margin:5px 0;color:#b8c2d4}
+  .msg .md-hr{border:0;border-top:1px solid rgba(255,255,255,.14);margin:8px 0}
+  .msg a{color:#8fb0ff;text-decoration:underline}
+  .msg del{opacity:.75}
+  body.light .msg .md-h{color:#1b2432}
+  body.light .msg .md-q{color:#4a5568;border-left-color:rgba(63,108,240,.45)}
+  body.light .msg .md-hr{border-top-color:rgba(15,23,42,.14)}
+  body.light .msg a{color:#2f5bd0}
   .msg.err{background:rgba(255,80,80,.12);border-color:rgba(255,100,100,.3);color:#ffb3b3}
   .inline{background:rgba(255,255,255,.1);padding:1px 5px;border-radius:4px;
     font-family:Consolas,"Cascadia Code",monospace;font-size:11.5px}
@@ -584,7 +622,7 @@
       stroke-width="2" stroke-linecap="round" style="flex:none">
       <circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>
     </svg>
-    <input id="pinput" placeholder="Describe the app you want, e.g. a Pomodoro timer" autocomplete="off" spellcheck="false">
+    <input id="pinput" placeholder="Describe an app, or enter a URL like example.com" autocomplete="off" spellcheck="false">
     <button id="pask" type="button">Ask</button>
     <button id="pgo">Generate App</button>
   </div>
@@ -599,6 +637,7 @@
   <div class="pfoot">
     <span id="pmode"><i class="mdot"></i>Local mode</span>
     <span style="display:flex;gap:10px;align-items:center">
+      <button class="link" id="importHtmlBtn">Import HTML</button>
       <button class="link" id="cfgLink">API Settings</button>
       <span><kbd>Enter</kbd> to ask · <kbd>Esc</kbd> to close</span>
     </span>
@@ -609,8 +648,11 @@
   <div class="ctxHint" id="ctxName"></div>
   <button type="button" data-ctx="rename" class="mod">Rename</button>
   <button type="button" data-ctx="modify" class="mod">Modify with AI</button>
+  <button type="button" data-ctx="export" class="mod">Export HTML</button>
   <button type="button" data-ctx="uninstall">Uninstall</button>
 </div>
+
+<input id="importHtml" type="file" accept=".html,.htm,.xhtml,text/html" hidden>
 
 <div class="overlay" id="settings" hidden>
   <div class="dialog">
@@ -709,13 +751,13 @@
         <div class="aboutLogo">AI</div>
         <div>
           <div class="aboutName">AI OS</div>
-          <div class="aboutVer">Version 1.0.0</div>
+          <div class="aboutVer">Version 1.0.1</div>
         </div>
       </div>
       <p class="desc">AI OS is a desktop-style workspace that runs entirely in your browser. Describe an app in plain language and the model generates it as a draggable, resizable window; chat with AI in its own window, keep generated apps on the Start menu, and switch between dark and light themes. API keys and installed apps stay on this device.</p>
       <div class="aboutMeta">
         <div><span>Author</span><b>LightlyTech</b></div>
-        <div><span>Version</span><b>1.0.0</b></div>
+        <div><span>Version</span><b>1.0.1</b></div>
         <div><span>GitHub</span><a href="https://github.com/LightlyTech/AI-OS" target="_blank" rel="noopener">github.com/LightlyTech/AI-OS</a></div>
       </div>
       <div class="dlgFoot">
@@ -968,6 +1010,7 @@
       if (w._task) w._task.classList.toggle('active', on);
     });
     win.style.zIndex = ++zTop;
+    if (win._mode === 'web') lastWebWin = win;
   }
 
   function setRect(win, l, t, w, h) {
@@ -1201,9 +1244,208 @@
     }
   }
 
+  function parseUrlInput(v) {
+    var s = String(v || '').trim();
+    if (!s || /\s/.test(s)) return '';
+    var m = s.match(/^(https?:\/\/)?((?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}|localhost|\d{1,3}(?:\.\d{1,3}){3})(?::\d{2,5})?(?:[\/?#][^\s]*)?$/i);
+    if (!m) return '';
+    var url = m[1] ? s : ((/^(localhost|\d{1,3}(?:\.\d{1,3}){3})(?::|\/|$)/i.test(s) ? 'http://' : 'https://') + s);
+    try {
+      var u = new URL(url);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return '';
+      if (!u.hostname) return '';
+      return u.href;
+    } catch (e) { return ''; }
+  }
+
+  var lastWebWin = null;
+
+  function updateWebNav(win) {
+    var hist = win._hist || [];
+    var idx = win._histIdx || 0;
+    var back = $('.webnav [data-nav="back"]', win);
+    var fwd = $('.webnav [data-nav="forward"]', win);
+    if (back) back.disabled = idx <= 0;
+    if (fwd) fwd.disabled = idx >= hist.length - 1;
+  }
+
+  function updateWebBar(win, url) {
+    win._url = url;
+    var u = $('.weburl', win);
+    if (u) { u.textContent = url; u.title = url; }
+    var a = $('.webopen', win);
+    if (a) a.href = url;
+  }
+
+  function rememberNav(win, url) {
+    if (!win._hist) { win._hist = []; win._histIdx = -1; }
+    if (win._hist[win._histIdx] !== url) {
+      win._hist = win._hist.slice(0, win._histIdx + 1);
+      win._hist.push(url);
+      win._histIdx = win._hist.length - 1;
+    }
+    updateWebBar(win, url);
+    updateWebNav(win);
+  }
+
+  function winNavigate(win, url, record) {
+    var frame = $('.webwrap iframe', win);
+    if (!frame) return false;
+    if (record === false) updateWebBar(win, url);
+    else rememberNav(win, url);
+    frame.src = url;
+    return true;
+  }
+
+  window.__aiosOpenUrl = function (url) {
+    url = String(url || '');
+    if (!/^https?:\/\//i.test(url)) return;
+    var target = null;
+    var active = document.querySelector('.win.active');
+    if (active && active._mode === 'web' && active.isConnected && active.style.display !== 'none') {
+      target = active;
+    }
+    if (!target) {
+      var bestZ = -1;
+      $$('.win').forEach(function (w) {
+        if (w._mode !== 'web' || !w.isConnected || w.style.display === 'none') return;
+        var z = parseInt(w.style.zIndex, 10) || 0;
+        if (z > bestZ) { bestZ = z; target = w; }
+      });
+    }
+    if (target) {
+      focusWin(target);
+      winNavigate(target, url);
+      return;
+    }
+    var parsed = parseUrlInput(url);
+    if (parsed) openUrlWindow(parsed);
+  };
+
+  function openUrlWindow(url, item) {
+    var u;
+    try { u = new URL(url); } catch (e) { return null; }
+
+    var prev = item || null;
+    if (!prev) {
+      loadApps().forEach(function (it) {
+        if (it.type === 'web' && it.url === url) prev = it;
+      });
+    }
+    var title = (prev && prev.title) || u.hostname.replace(/^www\./i, '');
+    var win = createWin(title, (prev && prev.icon) || '🌐');
+    win._url = url;
+    win._prompt = url;
+    win._mode = 'web';
+    win._hist = [url];
+    win._histIdx = 0;
+
+    if (item) {
+      win._installedId = item.id;
+    } else {
+      var installed = installApp({
+        id: prev ? prev.id : '',
+        type: 'web',
+        title: prev ? prev.title : title,
+        url: url,
+        icon: (prev && prev.icon) || '🌐',
+        hue: prev ? prev.hue : hashHue(title)
+      });
+      win._installedId = installed.id;
+    }
+
+    if (item && item.geo) {
+      applyGeo(win, item.geo);
+    } else {
+      var W = Math.max(320, Math.min(1040, desktop.clientWidth - 100));
+      var H = Math.max(240, Math.min(700, desktop.clientHeight - 110));
+      setRect(win,
+        Math.max(16, Math.round((desktop.clientWidth - W) / 2)),
+        Math.max(16, Math.round((desktop.clientHeight - H) / 2) - 24),
+        W, H);
+    }
+
+    var body = $('.wbody', win);
+    body.innerHTML =
+      '<div class="webwrap">' +
+        '<div class="webbar">' +
+          '<div class="webnav">' +
+            '<button type="button" data-nav="back" title="Back">' +
+              '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>' +
+            '</button>' +
+            '<button type="button" data-nav="reload" title="Refresh">' +
+              '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.4 5.7"/><path d="M20 4v7h-7"/></svg>' +
+            '</button>' +
+            '<button type="button" data-nav="forward" title="Forward">' +
+              '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>' +
+            '</button>' +
+          '</div>' +
+          '<span class="weburl" title="' + escapeHtml(url) + '">' + escapeHtml(url) + '</span>' +
+          '<a class="webopen" target="_blank" rel="noopener" href="' + escapeHtml(url) + '">Open in browser</a>' +
+        '</div>' +
+        '<iframe src="' + escapeHtml(url) + '" referrerpolicy="no-referrer" allowfullscreen ' +
+          'sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"></iframe>' +
+      '</div>';
+
+    lastWebWin = win;
+
+    var webFrame = $('.webwrap iframe', body);
+    if (webFrame) {
+      webFrame.addEventListener('load', function () {
+        try {
+          var href = webFrame.contentWindow.location.href;
+          if (href && href !== 'about:blank' && href !== win._url) rememberNav(win, href);
+        } catch (e) {}
+        updateWebNav(win);
+      });
+    }
+
+    $('.webnav', body).addEventListener('click', function (e) {
+      var b = e.target.closest('[data-nav]');
+      if (!b) return;
+      webNav(win, b.dataset.nav);
+    });
+    updateWebNav(win);
+
+    var openA = $('.webopen', body);
+    if (openA) {
+      openA.addEventListener('click', function (e) {
+        var api = window.pywebview && window.pywebview.api;
+        if (api && api.open_external) {
+          e.preventDefault();
+          api.open_external(openA.href);
+        }
+      });
+    }
+    return win;
+  }
+
+  function webNav(win, act) {
+    var frame = $('.webwrap iframe', win);
+    if (!frame) return;
+    if (act === 'reload') {
+      frame.src = frame.src;
+      return;
+    }
+    var hist = win._hist || [];
+    var idx = win._histIdx || 0;
+    if (act === 'back') {
+      if (idx <= 0) return;
+      win._histIdx = idx - 1;
+      winNavigate(win, hist[idx - 1], false);
+    } else if (act === 'forward') {
+      if (idx >= hist.length - 1) return;
+      win._histIdx = idx + 1;
+      winNavigate(win, hist[idx + 1], false);
+    }
+  }
+
   function openApp(prompt, mode) {
     prompt = String(prompt || '').trim();
     if (!prompt) return;
+
+    var url = parseUrlInput(prompt);
+    if (url) return openUrlWindow(url);
 
     var win = createWin(makeTitle(prompt));
     win._prompt = prompt;
@@ -1215,10 +1457,36 @@
   }
 
   function openHtmlWindow(title, html) {
-    var win = createWin(title || 'HTML Preview');
+    title = title || 'HTML Preview';
+    var win = createWin(title);
     win._prompt = '';
     win._mode = 'app';
-    mountApp(win, html);
+
+    var item = installApp({
+      type: 'app',
+      title: title,
+      html: html,
+      icon: '▶',
+      hue: hashHue(title)
+    });
+    win._installedId = item.id;
+    setWinIcon(win, item.icon || '');
+    mountApp(win, html, item.id);
+    win._meta = {
+      prompt: '',
+      mode: 'installed',
+      model: 'Installed locally',
+      endpoint: '',
+      startedAt: Date.now(),
+      elapsed: 0,
+      status: 'done',
+      reasoning: '',
+      error: '',
+      usage: null,
+      template: '',
+      steps: ['Ran code from chat — saved to Start']
+    };
+    refreshThinkTip(win);
     return win;
   }
 
@@ -1263,6 +1531,7 @@
         icon: data.icon || '',
         prompt: data.prompt || '',
         html: data.html || '',
+        url: data.url || '',
         chat: data.chat || [],
         hue: (typeof data.hue === 'number') ? data.hue : hashHue(data.title || 'App'),
         createdAt: Date.now()
@@ -1369,7 +1638,7 @@
           (item.icon ? ';font-size:15px' : '') + '">' +
           escapeHtml(item.icon || (String(item.title || 'A')[0] || 'A').toUpperCase()) + '</span>' +
         '<span class="pname">' + escapeHtml(item.title || 'Untitled') + '</span>' +
-        '<span class="ptype">' + (item.type === 'chat' ? 'Chat' : 'App') + '</span>';
+        '<span class="ptype">' + (item.type === 'chat' ? 'Chat' : item.type === 'web' ? 'Web' : 'App') + '</span>';
       b.addEventListener('click', function () {
         closePalette();
         openInstalled(item.id);
@@ -1391,10 +1660,13 @@
     var nameEl = $('#ctxName');
     if (nameEl) nameEl.textContent = item ? item.title : '';
     var modBtn = menu.querySelector('[data-ctx="modify"]');
-    var canModify = !!item && item.type !== 'chat';
+    var canModify = !!item && item.type === 'app';
     if (modBtn) modBtn.hidden = !canModify;
+    var expBtn = menu.querySelector('[data-ctx="export"]');
+    var canExport = !!item && item.type === 'app' && !!item.html;
+    if (expBtn) expBtn.hidden = !canExport;
     menu.hidden = false;
-    var w = 168, h = canModify ? 142 : 108;
+    var w = 168, h = 40 + 34 * (2 + (canModify ? 1 : 0) + (canExport ? 1 : 0));
     menu.style.left = Math.min(x, window.innerWidth - w - 8) + 'px';
     menu.style.top = Math.min(y, window.innerHeight - h - 8) + 'px';
   }
@@ -1440,6 +1712,12 @@
     var item = null;
     loadApps().forEach(function (it) { if (it.id === id) item = it; });
     if (!item) return;
+
+    if (item.type === 'web') {
+      if (item.url) openUrlWindow(item.url, item);
+      else toast('This saved site has no URL — enter its address again');
+      return;
+    }
 
     var win = createWin(item.title || 'Untitled', item.icon || '');
     win._prompt = item.prompt || '';
@@ -1806,9 +2084,79 @@
     return out;
   }
 
+  function mdInline(s) {
+    var codes = [];
+    s = String(s).replace(/`([^`\n]+)`/g, function (m, c) {
+      codes.push('<code class="inline">' + c + '</code>');
+      return '%%MDC' + (codes.length - 1) + '%%';
+    });
+    s = s
+      .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/__([^_\n]+)__/g, '<strong>$1</strong>')
+      .replace(/~~([^~\n]+)~~/g, '<del>$1</del>')
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+      .replace(/(^|[^_\w])_([^_\n]+)_/g, '$1<em>$2</em>')
+      .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    return s.replace(/%%MDC(\d+)%%/g, function (m, i) { return codes[+i]; });
+  }
+
   function formatText(s) {
     if (!s) return '';
-    return escapeHtml(s).replace(/`([^`\n]+)`/g, '<code class="inline">$1</code>');
+    return mdBlocks(escapeHtml(s).replace(/\r\n?/g, '\n'));
+  }
+
+  function mdBlocks(src) {
+    var lines = src.split('\n');
+    var blockRe = /^\s*(#{1,6}\s|>\s?|([-*+]|\d{1,3}[.)])\s)/;
+    var hrRe = /^([-*_])(\s*\1){2,}$/;
+    var out = '';
+    var i = 0;
+    while (i < lines.length) {
+      var line = lines[i];
+      var t = line.trim();
+      if (!t) { i++; continue; }
+
+      var hm = /^(#{1,6})\s+(.*)$/.exec(t);
+      if (hm) {
+        var lv = hm[1].length;
+        out += '<div class="md-h md-h' + lv + '">' +
+          mdInline(hm[2].replace(/\s+#+\s*$/, '')) + '</div>';
+        i++;
+        continue;
+      }
+      if (hrRe.test(t)) { out += '<hr class="md-hr">'; i++; continue; }
+      if (/^>\s?/.test(t)) {
+        var q = [];
+        while (i < lines.length && /^\s*>\s?/.test(lines[i])) {
+          q.push(lines[i].replace(/^\s*>\s?/, ''));
+          i++;
+        }
+        out += '<div class="md-q">' + mdBlocks(q.join('\n')) + '</div>';
+        continue;
+      }
+      var lm = /^(\s*)([-*+]|\d{1,3}[.)])\s+(.*)$/.exec(line);
+      if (lm) {
+        var tag = /\d/.test(lm[2]) ? 'ol' : 'ul';
+        var items = '';
+        while (i < lines.length) {
+          var li = /^(\s*)([-*+]|\d{1,3}[.)])\s+(.*)$/.exec(lines[i]);
+          if (!li) break;
+          items += '<li>' + mdInline(li[3]) + '</li>';
+          i++;
+        }
+        out += '<' + tag + ' class="md-list">' + items + '</' + tag + '>';
+        continue;
+      }
+      var para = [];
+      while (i < lines.length && lines[i].trim() &&
+             !blockRe.test(lines[i]) && !hrRe.test(lines[i].trim())) {
+        para.push(mdInline(lines[i]));
+        i++;
+      }
+      out += '<div class="md-p">' + para.join('\n') + '</div>';
+    }
+    return out;
   }
 
   var CODE_KEYWORDS = {};
@@ -1902,6 +2250,50 @@
         }
       })(wraps[i]);
     }
+  }
+
+  function exportAppHtml(id) {
+    var item = null;
+    loadApps().forEach(function (it) { if (it.id === id) item = it; });
+    if (!item || !item.html) {
+      toast('This item has no HTML to export');
+      return;
+    }
+    var blob = new Blob([item.html], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = (String(item.title || '').trim() || 'app') + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    toast('Exported ' + a.download);
+  }
+
+  function importHtmlApp(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var html = String(reader.result || '');
+      if (!html.trim()) {
+        toast('The HTML file is empty');
+        return;
+      }
+      var name = file.name.replace(/\.(html?|xhtml)$/i, '');
+      var tm = /<title[^>]*>([^<]*)<\/title>/i.exec(html);
+      var title = String((tm && tm[1]) || name || 'Imported app').trim().slice(0, 60) || 'Imported app';
+      var item = installApp({
+        type: 'app',
+        title: title,
+        html: html,
+        icon: '📄',
+        hue: hashHue(title)
+      });
+      toast('Installed "' + item.title + '" from HTML file');
+    };
+    reader.onerror = function () { toast('Could not read the HTML file'); };
+    reader.readAsText(file, 'utf-8');
   }
 
   function copyCode(text, btn) {
@@ -3043,6 +3435,14 @@ button:hover{background:#5480ff}
     if (e.key === 'Enter') submitPrompt('ask');
   });
   $('#cfgLink').addEventListener('click', openSettings);
+  $('#importHtmlBtn').addEventListener('click', function () {
+    $('#importHtml').click();
+  });
+  $('#importHtml').addEventListener('change', function () {
+    var f = this.files && this.files[0];
+    importHtmlApp(f);
+    this.value = '';
+  });
   $('#cfgTray').addEventListener('click', function (e) {
     e.stopPropagation();
     openSettings();
@@ -3209,7 +3609,7 @@ button:hover{background:#5480ff}
       return;
     }
     var payload = {
-      app: 'AI OS', version: '1.0.0', backupVersion: BACKUP_VERSION,
+      app: 'AI OS', version: '1.0.1', backupVersion: BACKUP_VERSION,
       exportedAt: new Date().toISOString(), data: data
     };
     var json = JSON.stringify(payload, null, 2);
@@ -3362,6 +3762,10 @@ button:hover{background:#5480ff}
       hideAppCtx();
       closePalette();
       openInstalled(id, true);
+    } else if (b.dataset.ctx === 'export' && ctxAppId) {
+      var eid = ctxAppId;
+      hideAppCtx();
+      exportAppHtml(eid);
     } else {
       hideAppCtx();
     }
