@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculator</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --display-bg: #12151b;
+    --text: #f2f4f8;
+    --text-dim: #8a93a5;
+    --key: #232833;
+    --key-hover: #2c3341;
+    --key-func: #2b3140;
+    --key-func-hover: #353d4e;
+    --accent: #ff9f43;
+    --accent-hover: #ffb066;
+    --accent-text: #1a1205;
+    --danger: #ff5c5c;
+    --danger-hover: #ff7b7b;
+    --shadow: rgba(0, 0, 0, 0.55);
+    --border: rgba(255, 255, 255, 0.07);
+    --ring: rgba(255, 159, 67, 0.35);
+    --history-hover: rgba(255, 255, 255, 0.05);
+  }
+
+  html[data-theme="light"] {
+    --bg: #eef1f6;
+    --panel: #ffffff;
+    --panel-2: #f4f6fa;
+    --display-bg: #f7f9fc;
+    --text: #141821;
+    --text-dim: #6b7383;
+    --key: #ffffff;
+    --key-hover: #eceff5;
+    --key-func: #e3e8f0;
+    --key-func-hover: #d7dde8;
+    --accent: #f07c14;
+    --accent-hover: #ff9433;
+    --accent-text: #ffffff;
+    --danger: #e04141;
+    --danger-hover: #f05b5b;
+    --shadow: rgba(30, 40, 60, 0.16);
+    --border: rgba(20, 30, 50, 0.09);
+    --ring: rgba(240, 124, 20, 0.28);
+    --history-hover: rgba(20, 30, 50, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow: hidden;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 860px;
+    height: min(100%, 700px);
+    max-height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 16px;
+  }
+
+  .calculator {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 18px 50px var(--shadow);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .display {
+    background: var(--display-bg);
+    padding: 22px 22px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 6px;
+    min-height: 150px;
+    flex: 0 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .display .expr {
+    font-size: 14px;
+    color: var(--text-dim);
+    min-height: 18px;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 0.4px;
+  }
+
+  .display .value {
+    font-size: clamp(28px, 6vw, 52px);
+    font-weight: 600;
+    text-align: right;
+    letter-spacing: -0.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .display .value.error { color: var(--danger); }
+
+  .keys {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 10px;
+    padding: 14px;
+    min-height: 0;
+  }
+
+  button.key {
+    border: 1px solid var(--border);
+    background: var(--key);
+    color: var(--text);
+    border-radius: 14px;
+    font-size: clamp(15px, 2.1vw, 20px);
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    user-select: none;
+    min-width: 0;
+    min-height: 0;
+    transition: background 0.13s ease, transform 0.08s ease, color 0.13s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  button.key:hover { background: var(--key-hover); }
+  button.key:active { transform: scale(0.96); }
+
+  button.key:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--ring);
+  }
+
+  button.key.func {
+    background: var(--key-func);
+    color: var(--text-dim);
+    font-size: clamp(14px, 1.9vw, 18px);
+  }
+  button.key.func:hover { background: var(--key-func-hover); color: var(--text); }
+
+  button.key.op {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  button.key.equals {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: transparent;
+    font-weight: 700;
+  }
+  button.key.equals:hover { background: var(--accent-hover); }
+
+  button.key.clear {
+    color: var(--danger);
+    font-weight: 600;
+  }
+
+  .side {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 18px 50px var(--shadow);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .side-head {
+    padding: 16px 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .side-head h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    margin: 0;
+    color: var(--text-dim);
+    font-weight: 700;
+  }
+
+  .clear-hist {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 11px;
+    padding: 5px 9px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+    white-space: nowrap;
+  }
+  .clear-hist:hover { color: var(--danger); background: var(--history-hover); }
+
+  .history {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 8px;
+    min-height: 0;
+    scrollbar-width: thin;
+  }
+
+  .history::-webkit-scrollbar { width: 8px; }
+  .history::-webkit-scrollbar-thumb {
+    background: var(--key-func);
+    border-radius: 8px;
+  }
+  .history::-webkit-scrollbar-track { background: transparent; }
+
+  .hist-empty {
+    color: var(--text-dim);
+    font-size: 13px;
+    text-align: center;
+    padding: 26px 14px;
+    line-height: 1.6;
+  }
+
+  .hist-item {
+    width: 100%;
+    text-align: right;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    padding: 9px 11px;
+    cursor: pointer;
+    color: var(--text);
+    font-family: inherit;
+    display: block;
+    transition: background 0.14s ease;
+  }
+  .hist-item:hover { background: var(--history-hover); }
+
+  .hist-item .h-expr {
+    font-size: 12px;
+    color: var(--text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hist-item .h-res {
+    font-size: 17px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .toggle-theme {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: none;
+  }
+
+  @media (max-width: 760px) {
+    .app {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) 170px;
+      max-width: 460px;
+      height: 100%;
+    }
+    .side { order: 2; }
+  }
+
+  @media (max-height: 560px) {
+    .display { min-height: 110px; padding: 14px 16px 12px; }
+    .keys { gap: 7px; padding: 10px; }
+    .app { max-width: 720px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="calculator">
+    <div class="display">
+      <div class="expr" id="expr">&nbsp;</div>
+      <div class="value" id="value">0</div>
+    </div>
+    <div class="keys" id="keys"></div>
+  </section>
+
+  <aside class="side">
+    <div class="side-head">
+      <h2>History</h2>
+      <button class="clear-hist" id="clearHist">Clear</button>
+    </div>
+    <div class="history" id="history">
+      <div class="hist-empty">No calculations yet.<br>Results will appear here.</div>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const STORAGE_KEY = "calculator.state.v1";
+
+  const state = {
+    current: "0",        // string currently shown / being typed
+    expression: "",      // full expression string of tokens (for display)
+    tokens: [],          // array of numbers and operators
+    justEvaluated: false,
+    error: false,
+    history: []          // [{expr, result}]
+  };
+
+  const elExpr = document.getElementById("expr");
+  const elValue = document.getElementById("value");
+  const elHistory = document.getElementById("history");
+  const elKeys = document.getElementById("keys");
+
+  /* ---------- persistence ---------- */
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        current: state.current,
+        tokens: state.tokens,
+        justEvaluated: state.justEvaluated,
+        history: state.history.slice(0, 100)
+      }));
+    } catch (e) { /* ignore quota errors */ }
+  }
+
+  function load() {
+    let raw = null;
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { raw = null; }
+    if (!raw) return;
+    let data;
+    try { data = JSON.parse(raw); } catch (e) { return; }
+    if (!data || typeof data !== "object") return;
+
+    if (typeof data.current === "string" && data.current.length && data.current.length < 40) {
+      state.current = data.current;
+    }
+    if (Array.isArray(data.tokens)) {
+      state.tokens = data.tokens.filter(t =>
+        (typeof t === "number" && isFinite(t)) ||
+        (typeof t === "string" && ["+", "-", "×", "÷", "^"].includes(t))
+      ).slice(0, 200);
+    }
+    state.justEvaluated = !!data.justEvaluated;
+    if (Array.isArray(data.history)) {
+      state.history = data.history
+        .filter(h => h && typeof h.expr === "string" && typeof h.result === "string")
+        .slice(0, 100);
+    }
+    if (state.tokens.length === 0 && state.current === "0" && data.current == null) {
+      state.current = "0";
+    }
+  }
+
+  /* ---------- number formatting ---------- */
+  function formatNumber(n) {
+    if (!isFinite(n)) return "Error";
+    if (Object.is(n, -0)) n = 0;
+    const abs = Math.abs(n);
+    if (abs !== 0 && (abs >= 1e15 || abs < 1e-9)) {
+      return n.toExponential(8).replace(/\.?0+e/, "e");
+    }
+    // round to avoid float artifacts, then trim
+    let s = parseFloat(n.toPrecision(14)).toString();
+    return s;
+  }
+
+  function formatForDisplay(str) {
+    // if numeric, add thousands separators to integer part
+    if (!/^-?\d+(\.\d+)?$/.test(str)) return str;
+    const neg = str.startsWith("-");
+    let body = neg ? str.slice(1) : str;
+    const dot = body.indexOf(".");
+    let intPart = dot === -1 ? body : body.slice(0, dot);
+    const decPart = dot === -1 ? "" : body.slice(dot);
+    intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return (neg ? "-" : "") + intPart + decPart;
+  }
+
+  /* ---------- expression evaluation (respects precedence) ---------- */
+  function evaluateTokens(tokens) {
+    if (!tokens.length) return 0;
+
+    // build a working copy of numbers & operators; tokens alternate num, op, num...
+    const nums = [];
+    const ops = [];
+    for (let i = 0; i < tokens.length; i++) {
+      const t = tokens[i];
+      if (typeof t === "number") nums.push(t);
+      else ops.push(t);
+    }
+    if (nums.length === 0) return 0;
+    if (nums.length === 1 && ops.length === 0) return nums[0];
+
+    // pass 1: ^
+    let n = [nums[0]];
+    let o = [];
+    for (let i = 0; i < ops.length; i++) {
+      const op = ops[i];
+      const nextN = nums[i + 1];
+      if (op === "^") {
+        const base = n[n.length - 1];
+        const val = Math.pow(base, nextN);
+        if (!isFinite(val)) throw new Error("Math error");
+        n[n.length - 1] = val;
+      } else {
+        o.push(op);
+        n.push(nextN);
+      }
+    }
+
+    // pass 2: × ÷
+    const n2 = [n[0]];
+    const o2 = [];
+    for (let i = 0; i < o.length; i++) {
+      const op = o[i];
+      const nextN = n[i + 1];
+      if (op === "×" || op === "÷") {
+        const left = n2[n2.length - 1];
+        let val;
+        if (op === "×") val = left * nextN;
+        else {
+          if (nextN === 0) throw new Error("Cannot divide by zero");
+          val = left / nextN;
+        }
+        if (!isFinite(val)) throw new Error("Math error");
+        n2[n2.length - 1] = val;
+      } else {
+        o2.push(op);
+        n2.push(nextN);
+      }
+    }
+
+    // pass 3: + -
+    let result = n2[0];
+    for (let i = 0; i < o2.length; i++) {
+      const op = o2[i];
+      const nextN = n2[i + 1];
+      result = op === "+" ? result + nextN : result - nextN;
+    }
+    if (!isFinite(result)) throw new Error("Math error");
+    return result;
+  }
+
+  function expressionString(tokens) {
+    let s = "";
+    for (const t of tokens) {
+      if (typeof t === "number") {
+        s += (s === "" || /[+\-×÷^]$/.test(s.trim()) ? "" : " ") + formatForDisplay(formatNumber(t));
+      } else {
+        s += " " + t + " ";
+      }
+    }
+    return s.replace(/\s+/g, " ").trim();
+  }
+
+  /* ---------- rendering ---------- */
+  function render() {
+    if (state.error) {
+      elValue.textContent = state.current;
+      elValue.classList.add("error");
+    } else {
+      elValue.textContent = formatForDisplay(state.current);
+      elValue.classList.remove("error");
+    }
+    const exprText = expressionString(state.tokens);
+    elExpr.innerHTML = exprText ? escapeHtml(exprText) : "&nbsp;";
+    renderHistory();
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+  }
+
+  function renderHistory() {
+    if (!state.history.length) {
+      elHistory.innerHTML = '<div class="hist-empty">No calculations yet.<br>Results will appear here.</div>';
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    state.history.slice(0, 100).forEach((item, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "hist-item";
+      btn.type = "button";
+      btn.dataset.idx = String(idx);
+      btn.title = "Click to reuse result";
+      const e = document.createElement("div");
+      e.className = "h-expr";
+      e.textContent = item.expr;
+      const r = document.createElement("div");
+      r.className = "h-res";
+      r.textContent = "= " + item.result;
+      btn.appendChild(e);
+      btn.appendChild(r);
+      frag.appendChild(btn);
+    });
+    elHistory.innerHTML = "";
+    elHistory.appendChild(frag);
+  }
+
+  elHistory.addEventListener("click", (ev) => {
+    const btn = ev.target.closest(".hist-item");
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    const item = state.history[idx];
+    if (!item) return;
+    const num = Number(item.result.replace(/,/g, ""));
+    if (isFinite(num)) {
+      state.error = false;
+      state.current = formatNumber(num);
+      state.tokens = [];
+      state.justEvaluated = true;
+    } else {
+      state.error = false;
+      state.current = "0";
+      state.tokens = [];
+      state.justEvaluated = true;
+    }
+    render();
+    save();
+  });
+
+  /* ---------- input handling ---------- */
+  function resetIfError() {
+    if (state.error) {
+      state.error = false;
+      state.current = "0";
+      state.tokens = [];
+      state.justEvaluated = false;
+    }
+  }
+
+  function inputDigit(d) {
+    resetIfError();
+
+    if (state.justEvaluated) {
+      // start a fresh calculation, keep nothing
+      state.tokens = [];
+      state.current = "0";
+      state.justEvaluated = false;
+    }
+    // if last token is an operator, start a new number
+    const lastTok = state.tokens[state.tokens.length - 1];
+    if (typeof lastTok === "string") {
+      state.current = "0";
+    }
+
+    if (state.current === "0") state.current = d;
+    else if (state.current === "-0") state.current = "-" + d;
+    else if (state.current.replace(/[-.]/g, "").length < 15) state.current += d;
+
+    syncTokensTail();
+    render();
+    save();
+  }
+
+  function inputDot() {
+    resetIfError();
+    if (state.justEvaluated) {
+      state.tokens = [];
+      state.current = "0";
+      state.justEvaluated = false;
+    }
+    const lastTok = state.tokens[state.tokens.length - 1];
+    if (typeof lastTok === "string") state.current = "0";
+
+    if (!state.current.includes(".")) {
+      state.current += ".";
+      syncTokensTail();
+      render();
+      save();
+    }
+  }
+
+  // keep the trailing number token in sync with state.current
+  function syncTokensTail() {
+    const last = state.tokens[state.tokens.length - 1];
+    if (typeof last === "number") {
+      const v = parseFloat(state.current);
+      state.tokens[state.tokens.length - 1] = isNaN(v) ? 0 : v;
+    } else {
+      const v = parseFloat(state.current);
+      state.tokens.push(isNaN(v) ? 0 : v);
+    }
+  }
+
+  function inputOperator(op) {
+    resetIfError();
+
+    if (state.justEvaluated) {
+      // continue with previous result
+      const v = parseFloat(state.current);
+      state.tokens = [isNaN(v) ? 0 : v];
+      state.justEvaluated = false;
+      state.tokens.push(op);
+      state.current = "0";
+      render();
+      save();
+      return;
+    }
+
+    if (!state.tokens.length) {
+      const v = parseFloat(state.current);
+      state.tokens = [isNaN(v) ? 0 : v];
+    } else {
+      const last = state.tokens[state.tokens.length - 1];
+      if (typeof last === "number") {
+        // commit current number
+        const v = parseFloat(state.current);
+        state.tokens[state.tokens.length - 1] = isNaN(v) ? 0 : v;
+      }
+    }
+
+    // if the last token is already an operator, replace it
+    const last = state.tokens[state.tokens.length - 1];
+    if (typeof last === "string") {
+      state.tokens[state.tokens.length - 1] = op;
+    } else {
+      // avoid dangling operator if tokens length is odd (number then op is fine)
+      state.tokens.push(op);
+    }
+    state.current = "0";
+    render();
+    save();
+  }
+
+  function toggleSign() {
+    resetIfError();
+    if (state.justEvaluated) {
+      state.current = state.current.startsWith("-") ? state.current.slice(1) : "-" + state.current;
+      state.tokens = [];
+      render();
+      save();
+      return;
+    }
+    if (state.current === "0") return;
+    state.current = state.current.startsWith("-") ? state.current.slice(1) : "-" + state.current;
+    syncTokensTail();
+    render();
+    save();
+  }
+
+  function percent() {
+    resetIfError();
+    let v = parseFloat(state.current);
+    if (isNaN(v)) return;
+    v = v / 100;
+    state.current = formatNumber(v);
+    if (state.justEvaluated) {
+      state.tokens = [];
+    } else {
+      syncTokensTail();
+    }
+    render();
+    save();
+  }
+
+  function backspace() {
+    resetIfError();
+    if (state.justEvaluated) {
+      state.current = "0";
+      state.tokens = [];
+      state.justEvaluated = false;
+      render();
+      save();
+      return;
+    }
+    if (state.current.length <= 1 || (state.current.length === 2 && state.current.startsWith("-"))) {
+      state.current = "0";
+    } else {
+      state.current = state.current.slice(0, -1);
+      if (state.current === "-") state.current = "0";
+    }
+    syncTokensTail();
+    render();
+    save();
+  }
+
+  function clearAll() {
+    state.current = "0";
+    state.tokens = [];
+    state.justEvaluated = false;
+    state.error = false;
+    render();
+    save();
+  }
+
+  function equals() {
+    if (state.error) { clearAll(); return; }
+
+    // commit current number into tokens
+    let tokens = state.tokens.slice();
+    if (!tokens.length) {
+      tokens = [parseFloat(state.current) || 0];
+    } else {
+      const last = tokens[tokens.length - 1];
+      if (typeof last === "string") {
+        // dangling operator: use current value as operand
+        tokens.push(parseFloat(state.current) || 0);
+      } else {
+        tokens[tokens.length - 1] = parseFloat(state.current) || 0;
+      }
+    }
+
+    const exprText = expressionString(tokens);
+    let result;
+    try {
+      result = evaluateTokens(tokens);
+    } catch (err) {
+      state.error = true;
+      state.current = err.message || "Error";
+      state.tokens = [];
+      state.justEvaluated = false;
+      render();
+      save();
+      return;
+    }
+
+    const resultStr = formatNumber(result);
+    state.history.unshift({ expr: exprText, result: formatForDisplay(resultStr) });
+    if (state.history.length > 100) state.history.length = 100;
+
+    state.current = resultStr;
+    state.tokens = [];
+    state.justEvaluated = true;
+    render();
+    save();
+  }
+
+  /* ---------- keypad ---------- */
+  const KEYS = [
+    { label: "AC",  cls: "func clear", act: clearAll },
+    { label: "⌫",   cls: "func",       act: backspace },
+    { label: "%",   cls: "func",       act: percent },
+    { label: "÷",   cls: "op",         act: () => inputOperator("÷") },
+    { label: "7",   act: () => inputDigit("7") },
+    { label: "8",   act: () => inputDigit("8") },
+    { label: "9",   act: () => inputDigit("9") },
+    { label: "×",   cls: "op",         act: () => inputOperator("×") },
+    { label: "4",   act: () => inputDigit("4") },
+    { label: "5",   act: () => inputDigit("5") },
+    { label: "6",   act: () => inputDigit("6") },
+    { label: "−",   cls: "op",         act: () => inputOperator("-") },
+    { label: "1",   act: () => inputDigit("1") },
+    { label: "2",   act: () => inputDigit("2") },
+    { label: "3",   act: () => inputDigit("3") },
+    { label: "+",   cls: "op",         act: () => inputOperator("+") },
+    { label: "±",   cls: "func",       act: toggleSign },
+    { label: "0",   act: () => inputDigit("0") },
+    { label: ".",   act: inputDot },
+    { label: "=",   cls: "equals",     act: equals }
+  ];
+
+  function buildKeypad() {
+    const frag = document.createDocumentFragment();
+    KEYS.forEach((k) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "key" + (k.cls ? " " + k.cls : "");
+      b.textContent = k.label;
+      b.addEventListener("click", () => {
+        k.act();
+        b.blur();
+      });
+      frag.appendChild(b);
+    });
+    elKeys.appendChild(frag);
+  }
+
+  /* ---------- keyboard support ---------- */
+  function handleKeydown(ev) {
+    const k = ev.key;
+    if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+
+    if (/^[0-9]$/.test(k)) { ev.preventDefault(); inputDigit(k); return; }
+    switch (k) {
+      case ".":
+      case ",":
+        ev.preventDefault(); inputDot(); break;
+      case "+":
+        ev.preventDefault(); inputOperator("+"); break;
+      case "-":
+        ev.preventDefault(); inputOperator("-"); break;
+      case "*":
+      case "x":
+      case "X":
+        ev.preventDefault(); inputOperator("×"); break;
+      case "/":
+        ev.preventDefault(); inputOperator("÷"); break;
+      case "Enter":
+      case "=":
+        ev.preventDefault(); equals(); break;
+      case "Backspace":
+        ev.preventDefault(); backspace(); break;
+      case "Delete":
+      case "Escape":
+        ev.preventDefault(); clearAll(); break;
+      case "%":
+        ev.preventDefault(); percent(); break;
+      case "^":
+        ev.preventDefault(); inputOperator("^"); break;
+    }
+  }
+
+  /* ---------- clear history ---------- */
+  document.getElementById("clearHist").addEventListener("click", () => {
+    state.history = [];
+    renderHistory();
+    save();
+  });
+
+  /* ---------- init ---------- */
+  load();
+  buildKeypad();
+  render();
+  document.addEventListener("keydown", handleKeydown);
+})();
+</script>
+</body>
+</html>

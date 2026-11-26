@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pelican on a Bicycle</title>
+<style>
+  :root{
+    --page-bg:#05070f;
+
+    --sky-top:#070b1c;
+    --sky-bottom:#1d2a5e;
+    --sun:#f6e6b8;
+    --sun-glow:rgba(246,230,184,0.20);
+    --star:rgba(220,232,255,0.95);
+    --cloud:rgba(120,140,200,0.20);
+    --hill-far:#141c40;
+    --hill-near:#0c1129;
+    --grass:#26405f;
+    --road:#12172b;
+    --road-edge:#2a3358;
+    --road-line:#8b9ade;
+
+    --bird:#eef3fb;
+    --bird-shade:#b9c6dd;
+    --beak:#f7b733;
+    --pouch:#ffcf6b;
+    --ink:#0a0e1c;
+    --bike:#4fd1c5;
+    --bike-dark:#2b8a83;
+    --tire:#0b1020;
+    --hub:#8fa3d6;
+    --shadow-soft:rgba(0,0,0,0.42);
+    --transparent:rgba(0,0,0,0);
+
+    --panel:rgba(13,19,36,0.74);
+    --panel-border:rgba(120,150,220,0.22);
+    --text:#e9f0ff;
+    --text-dim:#93a5c8;
+    --accent:#4fd1c5;
+    --accent-text:#04241f;
+    --btn:#1b2440;
+    --btn-hover:#243056;
+    --shadow:rgba(0,0,0,0.5);
+    --ring:rgba(79,209,197,0.45);
+  }
+
+  html[data-theme="light"]{
+    --page-bg:#dce9f7;
+
+    --sky-top:#a9d9ff;
+    --sky-bottom:#eaf7ff;
+    --sun:#ffd166;
+    --sun-glow:rgba(255,209,102,0.45);
+    --star:rgba(255,255,255,0.85);
+    --cloud:rgba(255,255,255,0.9);
+    --hill-far:#a8d8bd;
+    --hill-near:#7fc4a1;
+    --grass:#4fae74;
+    --road:#8b93a3;
+    --road-edge:#cdd6e2;
+    --road-line:#f6faff;
+
+    --bird:#ffffff;
+    --bird-shade:#cfdaeb;
+    --beak:#f5a623;
+    --pouch:#ffc456;
+    --ink:#17233a;
+    --bike:#12897f;
+    --bike-dark:#0b5f58;
+    --tire:#2b3446;
+    --hub:#5c6b85;
+    --shadow-soft:rgba(30,60,100,0.18);
+    --transparent:rgba(255,255,255,0);
+
+    --panel:rgba(255,255,255,0.84);
+    --panel-border:rgba(20,50,90,0.14);
+    --text:#0e1c33;
+    --text-dim:#5a6b86;
+    --accent:#0f9b8a;
+    --accent-text:#ffffff;
+    --btn:#e8f0fa;
+    --btn-hover:#d6e4f6;
+    --shadow:rgba(20,40,70,0.20);
+    --ring:rgba(15,155,138,0.35);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;}
+  body{
+    background:var(--page-bg);
+    color:var(--text);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .app{
+    height:100vh;
+    height:100dvh;
+    display:grid;
+    grid-template-rows:auto minmax(0,1fr) auto;
+    gap:12px;
+    padding:14px;
+  }
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:12px;min-width:0;}
+  .logo{
+    font-size:26px;line-height:1;
+    width:46px;height:46px;flex:0 0 auto;
+    display:grid;place-items:center;
+    border-radius:14px;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    box-shadow:0 6px 20px var(--shadow);
+  }
+  .brand h1{margin:0;font-size:16px;font-weight:700;letter-spacing:-0.01em;}
+  .brand p{margin:3px 0 0;font-size:12px;color:var(--text-dim);}
+
+  .topstats{display:flex;gap:8px;flex-wrap:wrap;}
+  .pill{
+    display:flex;align-items:baseline;gap:6px;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:999px;
+    padding:7px 14px;
+    font-size:11px;
+    color:var(--text-dim);
+    white-space:nowrap;
+  }
+  .pill strong{color:var(--text);font-size:14px;font-variant-numeric:tabular-nums;}
+  .pill em{font-style:normal;font-size:10px;opacity:.8;}
+
+  .stage{
+    position:relative;
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid var(--panel-border);
+    box-shadow:0 16px 44px var(--shadow);
+    min-height:0;
+    background:var(--road);
+  }
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;}
+
+  .hud{
+    position:absolute;
+    top:12px;left:12px;right:12px;
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    pointer-events:none;
+  }
+  .stat{
+    display:flex;flex-direction:column;gap:2px;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:14px;
+    padding:8px 14px;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  .stat .label{
+    font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);
+  }
+  .stat .value{
+    font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15;
+  }
+  .stat.big .value{font-size:22px;}
+
+  .toast{
+    position:absolute;
+    left:50%;bottom:18px;
+    transform:translate(-50%,12px);
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    color:var(--text);
+    padding:9px 18px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+    opacity:0;
+    transition:opacity .25s ease,transform .25s ease;
+    pointer-events:none;
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    box-shadow:0 8px 24px var(--shadow);
+    white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0);}
+
+  .controls{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{
+    font:inherit;
+    font-size:13px;
+    font-weight:600;
+    padding:12px 18px;
+    border-radius:12px;
+    border:1px solid var(--panel-border);
+    background:var(--btn);
+    color:var(--text);
+    cursor:pointer;
+    user-select:none;
+    -webkit-user-select:none;
+    touch-action:none;
+    transition:background .15s ease,transform .08s ease,filter .15s ease;
+    white-space:nowrap;
+  }
+  .btn:hover{background:var(--btn-hover);}
+  .btn:active{transform:translateY(1px);}
+  .btn.primary{
+    flex:1 1 210px;
+    background:var(--accent);
+    color:var(--accent-text);
+    border-color:transparent;
+    box-shadow:0 8px 22px var(--ring);
+  }
+  .btn.primary:hover{filter:brightness(1.07);}
+  .btn.primary.active{transform:translateY(2px) scale(.995);filter:brightness(.9);}
+  .btn.ghost{background:transparent;}
+  .btn.ghost:hover{background:var(--btn);}
+
+  @media (max-width:640px){
+    .brand p{display:none;}
+    .stat.big .value{font-size:18px;}
+    .stat .value{font-size:14px;}
+    .btn{padding:11px 14px;font-size:12px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">🐦</div>
+      <div>
+        <h1>Pelican on a Bicycle</h1>
+        <p>Hold to pedal · ring the bell · enjoy the ride</p>
+      </div>
+    </div>
+    <div class="topstats">
+      <div class="pill"><span>Top speed</span><strong id="topSpeed">0.0</strong><em>km/h</em></div>
+      <div class="pill"><span>Bells</span><strong id="bells">0</strong></div>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <canvas id="scene"></canvas>
+    <div class="hud">
+      <div class="stat big"><span class="label">Distance</span><span class="value" id="dist">0 m</span></div>
+      <div class="stat"><span class="label">Speed</span><span class="value" id="spd">0.0 km/h</span></div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </main>
+
+  <footer class="controls">
+    <button class="btn primary" id="pedalBtn">🚲 Hold to Pedal</button>
+    <button class="btn" id="bellBtn">🔔 Ring Bell</button>
+    <button class="btn" id="soundBtn">🔊 Sound On</button>
+    <button class="btn ghost" id="resetBtn">Reset Ride</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ---------------- state & persistence ---------------- */
+  var LS_KEY = 'pelican-bike-v1';
+  var PX_PER_M = 42;
+  var MAX_SPEED = 640;
+
+  var state = { distance: 0, topSpeed: 0, bells: 0, sound: true };
+
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p === 'object') {
+        if (typeof p.distance === 'number' && isFinite(p.distance)) state.distance = Math.max(0, p.distance);
+        if (typeof p.topSpeed === 'number' && isFinite(p.topSpeed)) state.topSpeed = Math.max(0, p.topSpeed);
+        if (typeof p.bells === 'number' && isFinite(p.bells)) state.bells = Math.max(0, Math.floor(p.bells));
+        if (typeof p.sound === 'boolean') state.sound = p.sound;
+      }
+    }
+  } catch (e) { /* ignore corrupt storage */ }
+
+  function save() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  /* ---------------- dom ---------------- */
+  var canvas = document.getElementById('scene');
+  var ctx = canvas.getContext('2d');
+  var stage = document.getElementById('stage');
+  var distEl = document.getElementById('dist');
+  var spdEl = document.getElementById('spd');
+  var topSpeedEl = document.getElementById('topSpeed');
+  var bellsEl = document.getElementById('bells');
+  var toastEl = document.getElementById('toast');
+  var pedalBtn = document.getElementById('pedalBtn');
+  var bellBtn = document.getElementById('bellBtn');
+  var soundBtn = document.getElementById('soundBtn');
+  var resetBtn = document.getElementById('resetBtn');
+
+  /* ---------------- colors from css variables ---------------- */
+  var colors = {};
+  function readColors() {
+    var cs = getComputedStyle(document.documentElement);
+    var map = {
+      skyTop: '--sky-top', skyBottom: '--sky-bottom',
+      sun: '--sun', sunGlow: '--sun-glow',
+      star: '--star', cloud: '--cloud',
+      hillFar: '--hill-far', hillNear: '--hill-near', grass: '--grass',
+      road: '--road', roadEdge: '--road-edge', roadLine: '--road-line',
+      bird: '--bird', birdShade: '--bird-shade', beak: '--beak', pouch: '--pouch',
+      ink: '--ink', bike: '--bike', bikeDark: '--bike-dark',
+      tire: '--tire', hub: '--hub', accent: '--accent',
+      shadowSoft: '--shadow-soft', transparent: '--transparent'
+    };
+    var out = {};
+    for (var k in map) {
+      out[k] = (cs.getPropertyValue(map[k]) || '').trim() || 'rgba(128,128,128,1)';
+    }
+    colors = out;
+  }
+  readColors();
+  if (window.MutationObserver) {
+    new MutationObserver(readColors).observe(document.documentElement, {
+      attributes: true, attributeFilter: ['data-theme']
+    });
+  }
+
+  /* ---------------- canvas metrics ---------------- */
+  var W = 800, H = 500, dpr = 1, groundY = 350, wheelR = 50, bikeX = 340;
+  var stars = [], clouds = [], tufts = [], speedLines = [];
+
+  function buildDecor() {
+    var i;
+    stars = [];
+    for (i = 0; i < 110; i++) {
+      stars.push({ x: Math.random(), y: Math.random() * 0.62, r: 0.5 + Math.random() * 1.5, a: 0.25 + Math.random() * 0.75 });
+    }
+    clouds = [];
+    for (i = 0; i < 7; i++) {
+      clouds.push({ x: Math.random(), y: 0.05 + Math.random() * 0.55, s: 0.6 + Math.random() * 0.9, v: 0.5 + Math.random() });
+    }
+    tufts = [];
+    for (i = 0; i < 46; i++) {
+      tufts.push({ x: Math.random(), s: 0.5 + Math.random() });
+    }
+    speedLines = [];
+    for (i = 0; i < 10; i++) {
+      speedLines.push({ y: Math.random(), ph: Math.random(), len: 0.6 + Math.random() * 0.9 });
+    }
+  }
+
+  function resize() {
+    var r = stage.getBoundingClientRect();
+    W = Math.max(1, Math.round(r.width));
+    H = Math.max(1, Math.round(r.height));
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    groundY = Math.round(H * 0.70);
+    wheelR = Math.max(16, Math.min(H * 0.115, W * 0.075));
+    bikeX = Math.round(W * 0.42);
+    buildDecor();
+  }
+
+  if (window.ResizeObserver) {
+    new ResizeObserver(resize).observe(stage);
+  } else {
+    window.addEventListener('resize', resize);
+  }
+  resize();
+
+  /* ---------------- runtime ---------------- */
+  var pedaling = false;
+  var speed = 0;
+  var distancePx = state.distance * PX_PER_M;
+  var wheelAngle = 0;
+  var crankAngle = 0;
+  var ripples = [];
+  var saveAcc = 0;
+  var uiAcc = 0;
+  var lastTime = performance.now();
+
+  /* ---------------- audio ---------------- */
+  var audioCtx = null;
+  function beep(freq, dur, type, gain) {
+    if (!state.sound) return;
+    try {
+      if (!audioCtx) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        audioCtx = new AC();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      var now = audioCtx.currentTime;
+      var osc = audioCtx.createOscillator();
+      var g = audioCtx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(gain || 0.06, now + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      osc.connect(g);
+      g.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + dur + 0.03);
+    } catch (e) {}
+  }
+
+  /* ---------------- ui helpers ---------------- */
+  var toastTimer = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1500);
+  }
+
+  function fmtDist(m) {
+    if (!isFinite(m) || m < 0) m = 0;
+    if (m < 1000) return Math.round(m) + ' m';
+    return (m / 1000).toFixed(2) + ' km';
+  }
+
+  function updateLiveStats() {
+    distEl.textContent = fmtDist(state.distance);
+    spdEl.textContent = (speed / PX_PER_M * 3.6).toFixed(1) + ' km/h';
+    topSpeedEl.textContent = state.topSpeed.toFixed(1);
+    bellsEl.textContent = String(state.bells);
+  }
+
+  function updateSoundBtn() {
+    soundBtn.textContent = state.sound ? '🔊 Sound On' : '🔇 Sound Off';
+  }
+  updateSoundBtn();
+  updateLiveStats();
+
+  /* ---------------- actions ---------------- */
+  function ringBell() {
+    state.bells += 1;
+    save();
+    updateLiveStats();
+    ripples.push({ life: 0 });
+    beep(1568, 0.10, 'triangle', 0.07);
+    setTimeout(function () { beep(2093, 0.16, 'triangle', 0.055); }, 85);
+    toast('Ring ring! 🔔');
+  }
+
+  function toggleSound() {
+    state.sound = !state.sound;
+    save();
+    updateSoundBtn();
+    toast(state.sound ? 'Sound on' : 'Sound off');
+    if (state.sound) beep(880, 0.09, 'sine', 0.05);
+  }
+
+  function resetRide() {
+    distancePx = 0;
+    speed = 0;
+    wheelAngle = 0;
+    crankAngle = 0;
+    state.distance = 0;
+    state.topSpeed = 0;
+    state.bells = 0;
+    save();
+    updateLiveStats();
+    ripples.length = 0;
+    toast('Ride reset');
+  }
+
+  function setPedaling(on) {
+    pedaling = on;
+    pedalBtn.classList.toggle('active', on);
+  }
+
+  /* ---------------- input ---------------- */
+  pedalBtn.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    try { pedalBtn.setPointerCapture(e.pointerId); } catch (err) {}
+    setPedaling(true);
+  });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (ev) {
+    pedalBtn.addEventListener(ev, function () { setPedaling(false); });
+  });
+
+  canvas.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    setPedaling(true);
+  });
+  window.addEventListener('pointerup', function () { setPedaling(false); });
+  window.addEventListener('pointercancel', function () { setPedaling(false); });
+  canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      if (!e.repeat) setPedaling(true);
+    } else if (e.key === 'b' || e.key === 'B') {
+      ringBell();
+    } else if (e.key === 'm' || e.key === 'M') {
+      toggleSound();
+    }
+  });
+  document.addEventListener('keyup', function (e) {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      setPedaling(false);
+    }
+  });
+
+  bellBtn.addEventListener('click', function () { bellBtn.blur(); ringBell(); });
+  soundBtn.addEventListener('click', function () { soundBtn.blur(); toggleSound(); });
+  resetBtn.addEventListener('click', function () { resetBtn.blur(); resetRide(); });
+
+  window.addEventListener('pagehide', save);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') save();
+  });
+
+  /* ---------------- geometry helpers ---------------- */
+  function solveKnee(hip, foot, l1, l2) {
+    var dx = foot.x - hip.x, dy = foot.y - hip.y;
+    var d = Math.sqrt(dx * dx + dy * dy);
+    if (d < 0.0001) d = 0.0001;
+    var dd = Math.max(0.0001, Math.min(d, l1 + l2 - 0.0001));
+    var a = (l1 * l1 - l2 * l2 + dd * dd) / (2 * dd);
+    var h = Math.sqrt(Math.max(0, l1 * l1 - a * a));
+    var ux = dx / d, uy = dy / d;
+    var bx = hip.x + ux * a, by = hip.y + uy * a;
+    return { x: bx + uy * h, y: by - ux * h };
+  }
+
+  /* ---------------- drawing ---------------- */
+  function drawWheel(cx, cy, R, ang) {
+    ctx.strokeStyle = colors.tire;
+    ctx.lineWidth = R * 0.135;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, 6.2831853);
+    ctx.stroke();
+
+    ctx.strokeStyle = colors.hub;
+    ctx.lineWidth = R * 0.04;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * 0.80, 0, 6.2831853);
+    ctx.stroke();
+
+    ctx.lineWidth = R * 0.032;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (var i = 0; i < 8; i++) {
+      var a = ang + i * Math.PI / 4;
+      ctx.moveTo(cx + Math.cos(a) * R * 0.14, cy + Math.sin(a) * R * 0.14);
+      ctx.lineTo(cx + Math.cos(a) * R * 0.78, cy + Math.sin(a) * R * 0.78);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = colors.hub;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R * 0.11, 0, 6.2831853);
+    ctx.fill();
+  }
+
+  function drawLeg(R, hip, foot, color, alpha) {
+    var knee = solveKnee(hip, foot, R * 1.0, R * 1.0);
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = R * 0.105;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(hip.x, hip.y);
+    ctx.lineTo(knee.x, knee.y);
+    ctx.lineTo(foot.x, foot.y);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPedal(R, p, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(p.x - R * 0.22, p.y - R * 0.05, R * 0.44, R * 0.10);
+  }
+
+  function drawPelican(t, R, GRIP) {
+    var bob = Math.sin(t * 7) * R * 0.035 * Math.min(1, 0.35 + speed / MAX_SPEED);
+    ctx.save();
+    ctx.translate(0, bob);
+
+    /* tail */
+    ctx.fillStyle = colors.birdShade;
+    ctx.beginPath();
+    ctx.moveTo(-1.15 * R, -2.60 * R);
+    ctx.lineTo(-1.88 * R, -2.80 * R);
+    ctx.lineTo(-1.30 * R, -2.10 * R);
+    ctx.closePath();
+    ctx.fill();
+
+    /* body */
+    ctx.fillStyle = colors.bird;
+    ctx.strokeStyle = colors.birdShade;
+    ctx.lineWidth = R * 0.05;
+    ctx.beginPath();
+    ctx.ellipse(-0.55 * R, -2.32 * R, 1.02 * R, 0.74 * R, -0.16, 0, 6.2831853);
+    ctx.fill();
+    ctx.stroke();
+
+    /* folded wing marks */
+    ctx.strokeStyle = colors.birdShade;
+    ctx.lineWidth = R * 0.045;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-0.25 * R, -2.30 * R);
+    ctx.quadraticCurveTo(-1.00 * R, -2.22 * R, -1.45 * R, -2.52 * R);
+    ctx.stroke();
+
+    /* neck */
+    ctx.strokeStyle = colors.bird;
+    ctx.lineWidth = R * 0.46;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0.02 * R, -2.62 * R);
+    ctx.quadraticCurveTo(0.48 * R, -3.00 * R, 0.62 * R, -3.22 * R);
+    ctx.stroke();
+
+    /* head */
+    ctx.fillStyle = colors.bird;
+    ctx.beginPath();
+    ctx.arc(0.72 * R, -3.26 * R, 0.40 * R, 0, 6.2831853);
+    ctx.fill();
+    ctx.strokeStyle = colors.birdShade;
+    ctx.lineWidth = R * 0.05;
+    ctx.stroke();
+
+    /* upper beak */
+    ctx.fillStyle = colors.beak;
+    ctx.beginPath();
+    ctx.moveTo(0.95 * R, -3.46 * R);
+    ctx.lineTo(2.24 * R, -3.06 * R);
+    ctx.lineTo(0.95 * R, -3.08 * R);
+    ctx.closePath();
+    ctx.fill();
+
+    /* pouch */
+    ctx.fillStyle = colors.pouch;
+    ctx.beginPath();
+    ctx.moveTo(0.95 * R, -3.10 * R);
+    ctx.quadraticCurveTo(1.58 * R, -2.48 * R, 2.22 * R, -3.04 * R);
+    ctx.closePath();
+    ctx.fill();
+
+    /* eye */
+    ctx.fillStyle = colors.ink;
+    ctx.beginPath();
+    ctx.arc(0.86 * R, -3.36 * R, 0.085 * R, 0, 6.2831853);
+    ctx.fill();
+    ctx.fillStyle = colors.bird;
+    ctx.beginPath();
+    ctx.arc(0.885 * R, -3.395 * R, 0.032 * R, 0, 6.2831853);
+    ctx.fill();
+
+    /* wing reaching the handlebar */
+    ctx.strokeStyle = colors.birdShade;
+    ctx.lineWidth = R * 0.24;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0.14 * R, -2.62 * R);
+    ctx.quadraticCurveTo(0.78 * R, -2.58 * R, GRIP.x, GRIP.y);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawBike(t) {
+    var R = wheelR;
+    ctx.save();
+    ctx.translate(bikeX, groundY);
+
+    var RW = { x: -1.35 * R, y: -R };
+    var FW = { x: 1.35 * R, y: -R };
+    var BB = { x: -0.05 * R, y: -0.58 * R };
+    var ST = { x: -0.78 * R, y: -1.66 * R };
+    var HT = { x: 0.92 * R, y: -1.66 * R };
+    var GRIP = { x: 1.16 * R, y: -1.98 * R };
+    var HIP = { x: -0.52 * R, y: -1.95 * R };
+
+    var crankLen = 0.44 * R;
+    var pedalNear = { x: BB.x + Math.cos(crankAngle) * crankLen, y: BB.y + Math.sin(crankAngle) * crankLen };
+    var pedalFar = { x: BB.x - Math.cos(crankAngle) * crankLen, y: BB.y - Math.sin(crankAngle) * crankLen };
+
+    /* wheels */
+    drawWheel(RW.x, RW.y, R, wheelAngle);
+    drawWheel(FW.x, FW.y, R, wheelAngle);
+
+    /* frame */
+    ctx.strokeStyle = colors.bike;
+    ctx.lineWidth = R * 0.13;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(RW.x, RW.y); ctx.lineTo(ST.x, ST.y);
+    ctx.moveTo(RW.x, RW.y); ctx.lineTo(BB.x, BB.y);
+    ctx.moveTo(BB.x, BB.y); ctx.lineTo(ST.x, ST.y);
+    ctx.moveTo(ST.x, ST.y); ctx.lineTo(HT.x, HT.y);
+    ctx.moveTo(BB.x, BB.y); ctx.lineTo(HT.x, HT.y);
+    ctx.moveTo(HT.x, HT.y); ctx.lineTo(FW.x, FW.y);
+    ctx.stroke();
+
+    /* chain */
+    ctx.strokeStyle = colors.bikeDark;
+    ctx.lineWidth = R * 0.035;
+    ctx.beginPath();
+    ctx.moveTo(BB.x, BB.y - 0.28 * R); ctx.lineTo(RW.x, RW.y - 0.16 * R);
+    ctx.moveTo(BB.x, BB.y + 0.28 * R); ctx.lineTo(RW.x, RW.y + 0.16 * R);
+    ctx.stroke();
+
+    /* handlebar stem + grip */
+    ctx.strokeStyle = colors.bike;
+    ctx.lineWidth = R * 0.11;
+    ctx.beginPath();
+    ctx.moveTo(HT.x, HT.y);
+    ctx.lineTo(GRIP.x, GRIP.y);
+    ctx.stroke();
+
+    ctx.strokeStyle = colors.ink;
+    ctx.lineWidth = R * 0.13;
+    ctx.beginPath();
+    ctx.moveTo(GRIP.x - R * 0.13, GRIP.y + R * 0.01);
+    ctx.lineTo(GRIP.x + R * 0.13, GRIP.y - R * 0.01);
+    ctx.stroke();
+
+    /* saddle */
+    ctx.fillStyle = colors.ink;
+    ctx.beginPath();
+    ctx.ellipse(ST.x - R * 0.05, ST.y - R * 0.03, R * 0.30, R * 0.09, -0.06, 0, 6.2831853);
+    ctx.fill();
+
+    /* far side: crank, pedal, leg */
+    ctx.strokeStyle = colors.bikeDark;
+    ctx.lineWidth = R * 0.09;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(BB.x, BB.y);
+    ctx.lineTo(pedalFar.x, pedalFar.y);
+    ctx.stroke();
+    drawPedal(R, pedalFar, colors.bikeDark);
+    drawLeg(R, HIP, pedalFar, colors.beak, 0.45);
+
+    /* pelican */
+    drawPelican(t, R, GRIP);
+
+    /* near side: crank, pedal, leg */
+    ctx.strokeStyle = colors.bike;
+    ctx.lineWidth = R * 0.10;
+    ctx.beginPath();
+    ctx.moveTo(BB.x, BB.y);
+    ctx.lineTo(pedalNear.x, pedalNear.y);
+    ctx.stroke();
+    drawLeg(R, HIP, pedalNear, colors.beak, 1);
+    drawPedal(R, pedalNear, colors.ink);
+
+    ctx.fillStyle = colors.bikeDark;
+    ctx.beginPath();
+    ctx.arc(BB.x, BB.y, R * 0.12, 0, 6.2831853);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawHills(offset, baseY, amp, freq, color) {
+    ctx.beginPath();
+    ctx.moveTo(-4, baseY);
+    for (var x = -4; x <= W + 12; x += 8) {
+      var p = (x + offset) * freq;
+      var y = baseY - (0.55 + 0.45 * Math.sin(p)) * amp - Math.sin(p * 2.7 + 1.3) * amp * 0.28;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(W + 12, baseY);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+
+    /* sky */
+    var sky = ctx.createLinearGradient(0, 0, 0, groundY);
+    sky.addColorStop(0, colors.skyTop);
+    sky.addColorStop(1, colors.skyBottom);
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, groundY + 2);
+
+    /* stars */
+    ctx.fillStyle = colors.star;
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      var sx = s.x * W - (distancePx * 0.012) % W;
+      sx = ((sx % W) + W) % W;
+      var tw = 0.55 + 0.45 * Math.sin(t * 2 + s.x * 30);
+      ctx.globalAlpha = Math.max(0, Math.min(1, s.a * tw));
+      ctx.beginPath();
+      ctx.arc(sx, s.y * groundY, s.r, 0, 6.2831853);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    /* sun / moon */
+    var cx = W * 0.79, cy = groundY * 0.32, sr = Math.min(W, H) * 0.055;
+    var glow = ctx.createRadialGradient(cx, cy, sr * 0.5, cx, cy, sr * 4.2);
+    glow.addColorStop(0, colors.sunGlow);
+    glow.addColorStop(1, colors.transparent);
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(cx, cy, sr * 4.2, 0, 6.2831853);
+    ctx.fill();
+
+    ctx.fillStyle = colors.sun;
+    ctx.beginPath();
+    ctx.arc(cx, cy, sr, 0, 6.2831853);
+    ctx.fill();
+
+    /* clouds */
+    ctx.fillStyle = colors.cloud;
+    for (var c = 0; c < clouds.length; c++) {
+      var cl = clouds[c];
+      var span = W + 420;
+      var px = ((cl.x * span - distancePx * 0.05 * cl.v) % span + span) % span - 210;
+      var py = cl.y * groundY * 0.8 + 8;
+      var cs = cl.s * Math.min(W, H) * 0.055;
+      ctx.beginPath();
+      ctx.arc(px, py, cs, 0, 6.2831853);
+      ctx.arc(px + cs * 1.0, py + cs * 0.16, cs * 0.78, 0, 6.2831853);
+      ctx.arc(px - cs * 1.0, py + cs * 0.2, cs * 0.68, 0, 6.2831853);
+      ctx.arc(px + cs * 0.1, py - cs * 0.5, cs * 0.7, 0, 6.2831853);
+      ctx.fill();
+    }
+
+    /* hills */
+    drawHills(distancePx * 0.18, groundY + 1, H * 0.10, 0.0055, colors.hillFar);
+    drawHills(distancePx * 0.42, groundY + 1, H * 0.062, 0.0105, colors.hillNear);
+
+    /* road */
+    ctx.fillStyle = colors.road;
+    ctx.fillRect(0, groundY, W, H - groundY);
+
+    ctx.fillStyle = colors.roadEdge;
+    ctx.fillRect(0, groundY, W, Math.max(2, H * 0.008));
+
+    /* grass tufts on the verge */
+    ctx.strokeStyle = colors.grass;
+    ctx.lineWidth = Math.max(1.5, H * 0.004);
+    ctx.lineCap = 'round';
+    var tspace = W + 200;
+    for (var g = 0; g < tufts.length; g++) {
+      var tf = tufts[g];
+      var gx = ((tf.x * tspace - distancePx * 1.15) % tspace + tspace) % tspace - 100;
+      if (gx < -24 || gx > W + 24) continue;
+      var hgt = 4 + tf.s * Math.min(14, H * 0.03);
+      ctx.beginPath();
+      ctx.moveTo(gx - 2, groundY + 3);
+      ctx.lineTo(gx - 3, groundY + 3 - hgt);
+      ctx.moveTo(gx + 2, groundY + 3);
+      ctx.lineTo(gx + 4, groundY + 3 - hgt * 0.78);
+      ctx.stroke();
+    }
+
+    /* dashed road line */
+    var dashW = Math.max(26, W * 0.055);
+    var gap = dashW * 0.85;
+    var dashY = groundY + (H - groundY) * 0.62;
+    ctx.fillStyle = colors.roadLine;
+    ctx.globalAlpha = 0.75;
+    var off = -(distancePx % (dashW + gap));
+    for (var dx = off; dx < W; dx += dashW + gap) {
+      ctx.fillRect(dx, dashY, dashW, Math.max(3, H * 0.012));
+    }
+    ctx.globalAlpha = 1;
+
+    /* ground shadow */
+    ctx.fillStyle = colors.shadowSoft;
+    ctx.beginPath();
+    ctx.ellipse(bikeX, groundY + wheelR * 0.05, wheelR * 2.2, wheelR * 0.22, 0, 0, 6.2831853);
+    ctx.fill();
+
+    /* speed lines */
+    if (speed > MAX_SPEED * 0.4) {
+      var k = (speed / MAX_SPEED - 0.4) / 0.6;
+      ctx.globalAlpha = 0.30 * k;
+      ctx.strokeStyle = colors.roadLine;
+      ctx.lineWidth = Math.max(1.5, wheelR * 0.035);
+      ctx.lineCap = 'round';
+      var lspan = W * 1.1;
+      for (var li = 0; li < speedLines.length; li++) {
+        var sl = speedLines[li];
+        var ly = groundY - wheelR * 0.35 - sl.y * wheelR * 3.4;
+        var lx = bikeX - wheelR * 2.4 - ((t * speed * 1.6 + sl.ph * lspan) % lspan);
+        ctx.beginPath();
+        ctx.moveTo(lx, ly);
+        ctx.lineTo(lx + wheelR * (0.9 + sl.len), ly);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    /* bike + pelican */
+    drawBike(t);
+
+    /* bell ripples */
+    for (var ri = 0; ri < ripples.length; ri++) {
+      var rp = ripples[ri];
+      var rad = wheelR * (0.5 + rp.life * 2.8);
+      ctx.globalAlpha = Math.max(0, (1 - rp.life) * 0.55);
+      ctx.strokeStyle = colors.accent;
+      ctx.lineWidth = Math.max(1.5, wheelR * 0.07 * (1 - rp.life));
+      ctx.beginPath();
+      ctx.arc(bikeX + 1.2 * wheelR, groundY - 2.1 * wheelR, rad, 0, 6.2831853);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ---------------- loop ---------------- */
+  function update(dt) {
+    if (pedaling) {
+      speed = Math.min(MAX_SPEED, speed + 780 * dt);
+    } else {
+      speed = Math.max(0, speed - 520 * dt);
+    }
+
+    distancePx += speed * dt;
+    var wheelSpeed = speed / Math.max(6, wheelR);
+    wheelAngle += wheelSpeed * dt;
+    crankAngle += wheelSpeed * 0.55 * dt;
+
+    state.distance = distancePx / PX_PER_M;
+    var kmh = speed / PX_PER_M * 3.6;
+    if (kmh > state.topSpeed) state.topSpeed = kmh;
+
+    for (var i = ripples.length - 1; i >= 0; i--) {
+      ripples[i].life += dt * 1.3;
+      if (ripples[i].life >= 1) ripples.splice(i, 1);
+    }
+
+    saveAcc += dt;
+    if (saveAcc > 0.7) { saveAcc = 0; save(); }
+
+    uiAcc += dt;
+    if (uiAcc > 0.1) { uiAcc = 0; updateLiveStats(); }
+  }
+
+  function frame(now) {
+    var dt = (now - lastTime) / 1000;
+    lastTime = now;
+    if (!isFinite(dt) || dt < 0) dt = 0;
+    dt = Math.min(dt, 0.05);
+
+    update(dt);
+    draw(now / 1000);
+
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

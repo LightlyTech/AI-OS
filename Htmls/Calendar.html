@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendar</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --border: #2a2f3a;
+    --text: #e7eaf0;
+    --text-dim: #9aa3b2;
+    --accent: #5b8cff;
+    --accent-soft: rgba(91,140,255,0.16);
+    --today: #ffb454;
+    --today-soft: rgba(255,180,84,0.14);
+    --danger: #ff6b6b;
+    --shadow: 0 8px 24px rgba(0,0,0,0.35);
+    --weekend: #8f98a8;
+  }
+  html[data-theme="light"] {
+    --bg: #f4f6fa;
+    --panel: #ffffff;
+    --panel-2: #f0f3f8;
+    --border: #dde3ec;
+    --text: #1b2230;
+    --text-dim: #65718a;
+    --accent: #3568e8;
+    --accent-soft: rgba(53,104,232,0.12);
+    --today: #e08a00;
+    --today-soft: rgba(224,138,0,0.13);
+    --danger: #d64545;
+    --shadow: 0 8px 24px rgba(30,40,70,0.12);
+    --weekend: #7a869c;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+
+  .app {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    height: 100vh;
+    gap: 0;
+  }
+
+  /* ---- Calendar side ---- */
+  .cal-side {
+    display: flex;
+    flex-direction: column;
+    padding: 18px 20px;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-right: auto;
+    white-space: nowrap;
+  }
+  .title span { color: var(--text-dim); font-weight: 500; margin-left: 6px; }
+
+  button {
+    font: inherit;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .05s;
+    user-select: none;
+  }
+  button:hover { background: var(--panel-2); border-color: var(--accent); }
+  button:active { transform: scale(0.97); }
+  .icon-btn { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; }
+  .today-btn { font-weight: 600; }
+  .seg {
+    display: inline-flex;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    overflow: hidden;
+  }
+  .seg button {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 7px 14px;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .seg button:hover { background: var(--panel-2); color: var(--text); }
+  .seg button.active { background: var(--accent-soft); color: var(--accent); }
+
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0,1fr));
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .weekdays div {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 4px 0;
+  }
+  .weekdays div.we { color: var(--weekend); }
+
+  .grid-wrap { flex: 1; min-height: 0; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0,1fr));
+    grid-auto-rows: minmax(0,1fr);
+    gap: 6px;
+    height: 100%;
+  }
+  .cell {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px 7px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color .15s, background .15s;
+  }
+  .cell:hover { border-color: var(--accent); }
+  .cell.other { opacity: .42; }
+  .cell.today { border-color: var(--today); background: var(--today-soft); }
+  .cell.selected { box-shadow: 0 0 0 2px var(--accent) inset; border-color: var(--accent); }
+  .cell .dnum {
+    font-size: 13px;
+    font-weight: 600;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex: none;
+  }
+  .cell.today .dnum { background: var(--today); color: var(--bg); }
+  .cell.other .dnum { color: var(--text-dim); }
+  .evts {
+    margin-top: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+  }
+  .evt {
+    font-size: 10.5px;
+    line-height: 1.3;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-left: 2px solid var(--accent);
+  }
+  .more { font-size: 10px; color: var(--text-dim); padding-left: 5px; }
+
+  /* Week / Day views */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0,1fr));
+    gap: 6px;
+    height: 100%;
+  }
+  .week-col {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .week-col.today { border-color: var(--today); }
+  .week-head {
+    padding: 8px 6px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    flex: none;
+  }
+  .week-head .wd { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-dim); font-weight: 700; }
+  .week-head .dn { font-size: 16px; font-weight: 700; margin-top: 2px; }
+  .week-col.today .week-head .dn { color: var(--today); }
+  .week-body { padding: 6px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .week-evt {
+    font-size: 11px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-left: 3px solid var(--accent);
+    cursor: pointer;
+    word-break: break-word;
+  }
+  .week-evt:hover { filter: brightness(1.15); }
+  .week-evt .t { color: var(--text-dim); font-size: 10px; display: block; }
+
+  .day-view {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .day-view .dv-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 16px;
+    font-weight: 700;
+    flex: none;
+  }
+  .day-view .dv-body { padding: 10px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .day-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 9px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+  }
+  .day-item .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+  .day-item .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .day-item .tm { color: var(--text-dim); font-size: 12px; flex: none; }
+  .empty { color: var(--text-dim); font-size: 13px; text-align: center; padding: 24px 0; }
+
+  /* ---- Side panel ---- */
+  .side {
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    box-shadow: var(--shadow);
+  }
+  .side-head {
+    padding: 18px 18px 12px;
+    border-bottom: 1px solid var(--border);
+    flex: none;
+  }
+  .side-head .sh-date { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); font-weight: 700; }
+  .side-head .sh-title { font-size: 19px; font-weight: 700; margin-top: 4px; }
+  .side-body {
+    padding: 14px 18px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+  }
+  .side-body h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-dim);
+    margin: 4px 0 0;
+  }
+  .add-row { display: flex; gap: 8px; }
+  input[type="text"], input[type="time"] {
+    font: inherit;
+    color: var(--text);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 9px 11px;
+    min-width: 0;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input[type="text"]:focus, input[type="time"]:focus { border-color: var(--accent); }
+  input[type="text"] { flex: 1; }
+  .add-row button {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    padding: 9px 14px;
+  }
+  .add-row button:hover { filter: brightness(1.1); background: var(--accent); }
+  html[data-theme="light"] .add-row button { color: #fff; }
+
+  .evt-list { display: flex; flex-direction: column; gap: 7px; }
+  .evt-card {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 9px 11px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    animation: pop .18s ease;
+  }
+  @keyframes pop { from { transform: translateY(4px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .evt-card .e-time { font-size: 11px; font-weight: 700; color: var(--accent); flex: none; width: 44px; }
+  .evt-card .e-title { flex: 1; min-width: 0; word-break: break-word; font-size: 13px; }
+  .evt-card .del {
+    flex: none;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    padding: 2px 4px;
+    font-size: 15px;
+    border-radius: 6px;
+    line-height: 1;
+  }
+  .evt-card .del:hover { color: var(--danger); background: var(--today-soft); }
+  .hint { color: var(--text-dim); font-size: 12px; text-align: center; padding: 18px 0; }
+  .foot {
+    padding: 10px 18px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    flex: none;
+  }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+  @media (max-width: 860px) {
+    body { overflow: auto; }
+    .app { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+    .cal-side { height: 72vh; }
+    .side { border-left: none; border-top: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="cal-side">
+    <div class="toolbar">
+      <div class="title" id="title">Month <span id="titleSub"></span></div>
+      <button class="icon-btn" id="prevBtn" title="Previous">‹</button>
+      <button class="today-btn" id="todayBtn">Today</button>
+      <button class="icon-btn" id="nextBtn" title="Next">›</button>
+      <div class="seg" id="viewSeg">
+        <button data-view="month" class="active">Month</button>
+        <button data-view="week">Week</button>
+        <button data-view="day">Day</button>
+      </div>
+    </div>
+    <div class="weekdays" id="weekdays"></div>
+    <div class="grid-wrap" id="gridWrap"></div>
+  </section>
+
+  <aside class="side">
+    <div class="side-head">
+      <div class="sh-date" id="sideDate"></div>
+      <div class="sh-title" id="sideTitle"></div>
+    </div>
+    <div class="side-body">
+      <h3>Add event</h3>
+      <div class="add-row">
+        <input type="text" id="evtTitle" placeholder="Event title…" maxlength="80">
+        <input type="time" id="evtTime" value="09:00">
+      </div>
+      <div class="add-row">
+        <button id="addBtn" style="flex:1;">Add event</button>
+      </div>
+      <h3>Events on this day</h3>
+      <div class="evt-list" id="evtList"></div>
+    </div>
+    <div class="foot">
+      <span id="footCount">0 events</span>
+      <span id="footToday"></span>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const STORAGE_KEY = "calendar.events.v1";
+  const VIEW_KEY = "calendar.view.v1";
+  const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  // ---- State ----
+  let events = loadEvents();          // { "YYYY-MM-DD": [ {id,title,time} ] }
+  let view = localStorage.getItem(VIEW_KEY) || "month";
+  if (!["month","week","day"].includes(view)) view = "month";
+
+  const now = new Date();
+  let cursor = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // selected day
+  let monthCursor = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // ---- Helpers ----
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function keyOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function todayKey() { const t = new Date(); return keyOf(t); }
+  function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function startOfWeek(d) { const x = new Date(d); x.setDate(x.getDate() - x.getDay()); x.setHours(0,0,0,0); return x; }
+  function fmtTime(t) {
+    if (!t) return "All day";
+    const [h, m] = t.split(":").map(Number);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const hh = h % 12 === 0 ? 12 : h % 12;
+    return hh + ":" + pad(m) + " " + ampm;
+  }
+  function sortEvents(list) {
+    return list.slice().sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
+  }
+
+  // ---- Persistence ----
+  function loadEvents() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const data = JSON.parse(raw);
+      if (data && typeof data === "object") return data;
+    } catch (e) {}
+    return {};
+  }
+  function saveEvents() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(events)); } catch (e) {}
+  }
+  function saveView() {
+    try { localStorage.setItem(VIEW_KEY, view); } catch (e) {}
+  }
+
+  // ---- DOM refs ----
+  const titleEl = document.getElementById("title");
+  const titleSub = document.getElementById("titleSub");
+  const weekdaysEl = document.getElementById("weekdays");
+  const gridWrap = document.getElementById("gridWrap");
+  const sideDate = document.getElementById("sideDate");
+  const sideTitle = document.getElementById("sideTitle");
+  const evtList = document.getElementById("evtList");
+  const evtTitleInput = document.getElementById("evtTitle");
+  const evtTimeInput = document.getElementById("evtTime");
+  const footCount = document.getElementById("footCount");
+  const footToday = document.getElementById("footToday");
+
+  // ---- Weekday header ----
+  function renderWeekdays() {
+    weekdaysEl.innerHTML = "";
+    DAY_NAMES.forEach((d, i) => {
+      const el = document.createElement("div");
+      el.textContent = d;
+      if (i === 0 || i === 6) el.classList.add("we");
+      weekdaysEl.appendChild(el);
+    });
+  }
+
+  // ---- Title ----
+  function renderTitle() {
+    if (view === "month") {
+      titleEl.firstChild.nodeValue = MONTHS[monthCursor.getMonth()] + " " + monthCursor.getFullYear() + " ";
+      titleSub.textContent = "";
+    } else if (view === "week") {
+      const s = startOfWeek(cursor);
+      const e = addDays(s, 6);
+      const sameMonth = s.getMonth() === e.getMonth();
+      titleEl.firstChild.nodeValue = MONTHS[s.getMonth()] + " " + s.getDate() + (sameMonth ? "" : " – " + MONTHS[e.getMonth()] + " " + e.getDate()) + ", " + e.getFullYear() + " ";
+      titleSub.textContent = "";
+    } else {
+      titleEl.firstChild.nodeValue = MONTHS[cursor.getMonth()] + " " + cursor.getDate() + ", " + cursor.getFullYear() + " ";
+      titleSub.textContent = DAY_NAMES[cursor.getDay()];
+    }
+  }
+
+  // ---- Views ----
+  function render() {
+    renderTitle();
+    gridWrap.innerHTML = "";
+    if (view === "month") renderMonth();
+    else if (view === "week") renderWeek();
+    else renderDay();
+    renderSide();
+    renderFooter();
+  }
+
+  function renderMonth() {
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    const first = new Date(monthCursor.getFullYear(), monthCursor.getMonth(), 1);
+    const startOffset = first.getDay();
+    const start = addDays(first, -startOffset);
+    const tKey = todayKey();
+    const selKey = keyOf(cursor);
+
+    for (let i = 0; i < 42; i++) {
+      const d = addDays(start, i);
+      const k = keyOf(d);
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      if (d.getMonth() !== monthCursor.getMonth()) cell.classList.add("other");
+      if (k === tKey) cell.classList.add("today");
+      if (k === selKey) cell.classList.add("selected");
+      cell.dataset.key = k;
+
+      const num = document.createElement("div");
+      num.className = "dnum";
+      num.textContent = d.getDate();
+      cell.appendChild(num);
+
+      const list = sortEvents(events[k] || []);
+      if (list.length) {
+        const wrap = document.createElement("div");
+        wrap.className = "evts";
+        const max = 3;
+        list.slice(0, max).forEach(ev => {
+          const e = document.createElement("div");
+          e.className = "evt";
+          e.textContent = (ev.time ? fmtTime(ev.time).replace(":00", "") + " " : "") + ev.title;
+          wrap.appendChild(e);
+        });
+        if (list.length > max) {
+          const m = document.createElement("div");
+          m.className = "more";
+          m.textContent = "+" + (list.length - max) + " more";
+          wrap.appendChild(m);
+        }
+        cell.appendChild(wrap);
+      }
+
+      cell.addEventListener("click", () => {
+        cursor = new Date(d);
+        if (d.getMonth() !== monthCursor.getMonth()) monthCursor = new Date(d.getFullYear(), d.getMonth(), 1);
+        render();
+      });
+      grid.appendChild(cell);
+    }
+    gridWrap.appendChild(grid);
+  }
+
+  function renderWeek() {
+    const wrap = document.createElement("div");
+    wrap.className = "week-grid";
+    const start = startOfWeek(cursor);
+    const tKey = todayKey();
+
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(start, i);
+      const k = keyOf(d);
+      const col = document.createElement("div");
+      col.className = "week-col";
+      if (k === tKey) col.classList.add("today");
+
+      const head = document.createElement("div");
+      head.className = "week-head";
+      head.innerHTML = '<div class="wd">' + DAY_NAMES[d.getDay()] + '</div><div class="dn">' + d.getDate() + '</div>';
+      head.addEventListener("click", () => { cursor = new Date(d); view = "day"; saveView(); syncViewButtons(); render(); });
+      col.appendChild(head);
+
+      const body = document.createElement("div");
+      body.className = "week-body";
+      const list = sortEvents(events[k] || []);
+      if (!list.length) {
+        const e = document.createElement("div");
+        e.className = "empty";
+        e.style.padding = "10px 0";
+        e.textContent = "—";
+        body.appendChild(e);
+      } else {
+        list.forEach(ev => {
+          const e = document.createElement("div");
+          e.className = "week-evt";
+          e.innerHTML = '<span class="t">' + (ev.time ? fmtTime(ev.time) : "All day") + '</span>';
+          const t = document.createElement("span");
+          t.textContent = ev.title;
+          e.appendChild(t);
+          e.addEventListener("click", () => { cursor = new Date(d); view = "day"; saveView(); syncViewButtons(); render(); });
+          body.appendChild(e);
+        });
+      }
+      col.appendChild(body);
+      wrap.appendChild(col);
+    }
+    gridWrap.appendChild(wrap);
+  }
+
+  function renderDay() {
+    const wrap = document.createElement("div");
+    wrap.className = "day-view";
+    const head = document.createElement("div");
+    head.className = "dv-head";
+    head.textContent = DAY_NAMES[cursor.getDay()] + ", " + MONTHS[cursor.getMonth()] + " " + cursor.getDate();
+    wrap.appendChild(head);
+    const body = document.createElement("div");
+    body.className = "dv-body";
+    const list = sortEvents(events[keyOf(cursor)] || []);
+    if (!list.length) {
+      const e = document.createElement("div");
+      e.className = "empty";
+      e.textContent = "No events for this day. Add one on the right →";
+      body.appendChild(e);
+    } else {
+      list.forEach(ev => {
+        const item = document.createElement("div");
+        item.className = "day-item";
+        const dot = document.createElement("div");
+        dot.className = "dot";
+        const txt = document.createElement("div");
+        txt.className = "txt";
+        txt.textContent = ev.title;
+        const tm = document.createElement("div");
+        tm.className = "tm";
+        tm.textContent = ev.time ? fmtTime(ev.time) : "All day";
+        item.appendChild(dot); item.appendChild(txt); item.appendChild(tm);
+        body.appendChild(item);
+      });
+    }
+    wrap.appendChild(body);
+    gridWrap.appendChild(wrap);
+  }
+
+  // ---- Side panel ----
+  function renderSide() {
+    const k = keyOf(cursor);
+    sideDate.textContent = DAY_NAMES[cursor.getDay()] + " · " + MONTHS[cursor.getMonth()] + " " + cursor.getDate() + ", " + cursor.getFullYear();
+    sideTitle.textContent = keyOf(new Date()) === k ? "Today" : "Selected day";
+
+    evtList.innerHTML = "";
+    const list = sortEvents(events[k] || []);
+    if (!list.length) {
+      const h = document.createElement("div");
+      h.className = "hint";
+      h.textContent = "No events yet. Add your first one above.";
+      evtList.appendChild(h);
+      return;
+    }
+    list.forEach(ev => {
+      const card = document.createElement("div");
+      card.className = "evt-card";
+      const time = document.createElement("div");
+      time.className = "e-time";
+      time.textContent = ev.time ? fmtTime(ev.time) : "All day";
+      const title = document.createElement("div");
+      title.className = "e-title";
+      title.textContent = ev.title;
+      const del = document.createElement("button");
+      del.className = "del";
+      del.title = "Delete event";
+      del.textContent = "✕";
+      del.addEventListener("click", () => removeEvent(k, ev.id));
+      card.appendChild(time); card.appendChild(title); card.appendChild(del);
+      evtList.appendChild(card);
+    });
+  }
+
+  function renderFooter() {
+    let count = 0;
+    for (const k in events) count += events[k].length;
+    footCount.textContent = count + (count === 1 ? " event" : " events") + " total";
+    const t = new Date();
+    footToday.textContent = "Today: " + MONTHS[t.getMonth()].slice(0,3) + " " + t.getDate() + ", " + t.getFullYear();
+  }
+
+  // ---- Actions ----
+  function addEvent() {
+    const title = evtTitleInput.value.trim();
+    if (!title) { evtTitleInput.focus(); return; }
+    const time = evtTimeInput.value || "";
+    const k = keyOf(cursor);
+    if (!events[k]) events[k] = [];
+    events[k].push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title, time });
+    saveEvents();
+    evtTitleInput.value = "";
+    evtTitleInput.focus();
+    render();
+  }
+
+  function removeEvent(k, id) {
+    if (!events[k]) return;
+    events[k] = events[k].filter(e => e.id !== id);
+    if (!events[k].length) delete events[k];
+    saveEvents();
+    render();
+  }
+
+  function syncViewButtons() {
+    document.querySelectorAll("#viewSeg button").forEach(b => {
+      b.classList.toggle("active", b.dataset.view === view);
+    });
+  }
+
+  // ---- Navigation ----
+  document.getElementById("prevBtn").addEventListener("click", () => {
+    if (view === "month") monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1);
+    else if (view === "week") cursor = addDays(cursor, -7);
+    else cursor = addDays(cursor, -1);
+    render();
+  });
+  document.getElementById("nextBtn").addEventListener("click", () => {
+    if (view === "month") monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1);
+    else if (view === "week") cursor = addDays(cursor, 7);
+    else cursor = addDays(cursor, 1);
+    render();
+  });
+  document.getElementById("todayBtn").addEventListener("click", () => {
+    const t = new Date();
+    cursor = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    monthCursor = new Date(t.getFullYear(), t.getMonth(), 1);
+    render();
+  });
+
+  document.getElementById("viewSeg").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-view]");
+    if (!btn) return;
+    view = btn.dataset.view;
+    saveView();
+    syncViewButtons();
+    render();
+  });
+
+  document.getElementById("addBtn").addEventListener("click", addEvent);
+  evtTitleInput.addEventListener("keydown", (e) => { if (e.key === "Enter") addEvent(); });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input")) return;
+    if (e.key === "ArrowLeft") document.getElementById("prevBtn").click();
+    else if (e.key === "ArrowRight") document.getElementById("nextBtn").click();
+    else if (e.key.toLowerCase() === "t") document.getElementById("todayBtn").click();
+  });
+
+  // ---- Init ----
+  renderWeekdays();
+  syncViewButtons();
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sticky Notes</title>
+<style>
+  :root{
+    --bg: #12141a;
+    --bg-2: #191c24;
+    --panel: #1f232d;
+    --panel-2: #262b37;
+    --border: #333a48;
+    --text: #e8ecf4;
+    --text-dim: #9aa4b6;
+    --accent: #f5c542;
+    --accent-2: #ffd966;
+    --danger: #ef6b6b;
+    --shadow: 0 10px 26px rgba(0,0,0,.45);
+    --note-bg: #2b2f3a;
+    --note-text: #e8ecf4;
+    --note-border: #3a4150;
+    --pin: #f5c542;
+    --scroll: #3a4150;
+  }
+  html[data-theme="light"]{
+    --bg: #f2f0ea;
+    --bg-2: #e9e6dd;
+    --panel: #ffffff;
+    --panel-2: #f7f5ef;
+    --border: #dcd7c9;
+    --text: #2b2a26;
+    --text-dim: #7a7568;
+    --accent: #d9a400;
+    --accent-2: #b98a00;
+    --danger: #d64545;
+    --shadow: 0 10px 24px rgba(90,80,50,.18);
+    --note-bg: #fff9c9;
+    --note-text: #3a3524;
+    --note-border: #efe6a8;
+    --pin: #c99a00;
+    --scroll: #dcd7c9;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 20% -10%, var(--bg-2), var(--bg) 60%);
+    color: var(--text);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    height:100vh;
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:14px 20px;
+    border-bottom:1px solid var(--border);
+    background: color-mix(in srgb, var(--panel) 70%, transparent);
+    backdrop-filter: blur(8px);
+    flex:0 0 auto;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-weight:700; font-size:18px; letter-spacing:.2px;
+    white-space:nowrap;
+  }
+  .brand .logo{
+    width:28px;height:28px;border-radius:8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display:grid;place-items:center;font-size:15px;
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  .counter{
+    font-size:12px; color:var(--text-dim);
+    padding:4px 10px; border:1px solid var(--border); border-radius:999px;
+    white-space:nowrap;
+  }
+  .spacer{flex:1;}
+
+  .search{
+    position:relative;
+    flex:0 1 260px;
+    min-width:120px;
+  }
+  .search input{
+    width:100%;
+    padding:9px 12px 9px 32px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    font-size:13px;
+    outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .search input:focus{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .search .ico{
+    position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    color:var(--text-dim); font-size:13px; pointer-events:none;
+  }
+
+  button{
+    font-family:inherit;
+    cursor:pointer;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    border-radius:10px;
+    padding:9px 14px;
+    font-size:13px;
+    font-weight:600;
+    transition:transform .08s, background .15s, border-color .15s;
+    white-space:nowrap;
+  }
+  button:hover{background:var(--panel); border-color:var(--accent);}
+  button:active{transform:scale(.96);}
+  button.primary{
+    background:linear-gradient(135deg, var(--accent), var(--accent-2));
+    color:#1a1a1a;
+    border-color:transparent;
+    box-shadow:0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  button.primary:hover{filter:brightness(1.06);}
+  button.icon-btn{
+    padding:8px 10px;
+    font-size:15px;
+    line-height:1;
+  }
+
+  main{
+    flex:1 1 auto;
+    overflow-y:auto;
+    padding:22px;
+    scrollbar-width:thin;
+    scrollbar-color: var(--scroll) transparent;
+  }
+  main::-webkit-scrollbar{width:10px;}
+  main::-webkit-scrollbar-thumb{background:var(--scroll); border-radius:10px; border:2px solid transparent; background-clip:content-box;}
+
+  .board{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:18px;
+    align-items:start;
+  }
+
+  .note{
+    position:relative;
+    background:var(--note-bg);
+    color:var(--note-text);
+    border:1px solid var(--note-border);
+    border-radius:14px;
+    padding:14px 14px 12px;
+    min-height:160px;
+    display:flex;
+    flex-direction:column;
+    box-shadow:var(--shadow);
+    transition:transform .15s, box-shadow .15s;
+    animation:pop .18s ease-out;
+  }
+  @keyframes pop{from{transform:scale(.94); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .note:hover{transform:translateY(-3px); box-shadow:0 14px 30px rgba(0,0,0,.35);}
+  .note::before{
+    content:"";
+    position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+    width:16px; height:16px; border-radius:50%;
+    background:var(--pin);
+    box-shadow:0 2px 6px rgba(0,0,0,.35), inset 0 -2px 3px rgba(0,0,0,.2);
+  }
+  .note .title{
+    font-weight:800;
+    font-size:15px;
+    margin-bottom:8px;
+    padding-right:20px;
+    outline:none;
+    word-break:break-word;
+  }
+  .note .body{
+    flex:1;
+    font-size:13.5px;
+    line-height:1.5;
+    white-space:pre-wrap;
+    word-break:break-word;
+    outline:none;
+    opacity:.92;
+    max-height:220px;
+    overflow-y:auto;
+    scrollbar-width:thin;
+    scrollbar-color: color-mix(in srgb, var(--note-text) 25%, transparent) transparent;
+  }
+  .note .body::-webkit-scrollbar{width:6px;}
+  .note .body::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--note-text) 25%, transparent); border-radius:6px;}
+  .note .title:empty::before, .note .body:empty::before{
+    content:attr(data-ph);
+    opacity:.42;
+    pointer-events:none;
+  }
+  .note .foot{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:10px;
+    padding-top:8px;
+    border-top:1px dashed color-mix(in srgb, var(--note-text) 18%, transparent);
+    font-size:11px;
+    opacity:.7;
+  }
+  .note .actions{display:flex; gap:4px;}
+  .note .actions button{
+    background:transparent;
+    border:none;
+    padding:3px 5px;
+    font-size:13px;
+    border-radius:6px;
+    color:inherit;
+    opacity:.65;
+  }
+  .note .actions button:hover{opacity:1; background:color-mix(in srgb, var(--note-text) 12%, transparent);}
+  .note .actions button.del:hover{color:var(--danger);}
+
+  .empty{
+    grid-column:1/-1;
+    text-align:center;
+    padding:70px 20px;
+    color:var(--text-dim);
+  }
+  .empty .big{font-size:46px; margin-bottom:14px;}
+  .empty h2{font-size:18px; color:var(--text); margin-bottom:6px;}
+  .empty p{font-size:13px;}
+
+  footer{
+    flex:0 0 auto;
+    padding:9px 20px;
+    font-size:11.5px;
+    color:var(--text-dim);
+    border-top:1px solid var(--border);
+    display:flex; justify-content:space-between; gap:10px;
+    background:color-mix(in srgb, var(--panel) 55%, transparent);
+  }
+  .kbd{
+    font-family:ui-monospace, Menlo, Consolas, monospace;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:5px;
+    padding:1px 5px;
+    font-size:10.5px;
+  }
+
+  @media (max-width:640px){
+    header{flex-wrap:wrap; gap:10px; padding:12px 14px;}
+    .search{flex:1 1 100%; order:5;}
+    main{padding:14px;}
+    .board{grid-template-columns:repeat(auto-fill, minmax(170px,1fr)); gap:14px;}
+    footer .hint{display:none;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="logo">📝</span> Sticky Notes</div>
+  <span class="counter" id="counter">0 notes</span>
+  <div class="spacer"></div>
+  <div class="search">
+    <span class="ico">🔍</span>
+    <input id="search" type="text" placeholder="Search notes…" autocomplete="off">
+  </div>
+  <button class="primary" id="addBtn">＋ New note</button>
+  <button class="icon-btn" id="themeBtn" title="Toggle theme">🌓</button>
+</header>
+
+<main>
+  <div class="board" id="board"></div>
+</main>
+
+<footer>
+  <span class="hint">Click a note to edit · content saves automatically</span>
+  <span><span class="kbd">Ctrl</span> + <span class="kbd">N</span> new note</span>
+</footer>
+
+<script>
+(function(){
+  const STORAGE_KEY = "sticky-notes-state-v1";
+  const board = document.getElementById("board");
+  const counter = document.getElementById("counter");
+  const searchInput = document.getElementById("search");
+  const addBtn = document.getElementById("addBtn");
+  const themeBtn = document.getElementById("themeBtn");
+
+  let state = { notes: [], theme: null, search: "" };
+  let saveTimer = null;
+
+  function uid(){
+    return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        if(parsed && Array.isArray(parsed.notes)){
+          state.notes = parsed.notes.map(n => ({
+            id: n.id || uid(),
+            title: typeof n.title === "string" ? n.title : "",
+            body: typeof n.body === "string" ? n.body : "",
+            updated: typeof n.updated === "number" ? n.updated : Date.now()
+          }));
+        }
+        if(typeof parsed.search === "string") state.search = parsed.search;
+        if(typeof parsed.theme === "string") state.theme = parsed.theme;
+      }
+    }catch(e){ /* ignore corrupt data */ }
+  }
+
+  function save(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(()=>{
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          notes: state.notes,
+          search: searchInput.value,
+          theme: document.documentElement.getAttribute("data-theme")
+        }));
+      }catch(e){ /* storage might be full/unavailable */ }
+    }, 120);
+  }
+
+  function applyTheme(){
+    if(state.theme === "light" || state.theme === "dark"){
+      document.documentElement.setAttribute("data-theme", state.theme);
+    }
+  }
+
+  function fmtTime(ts){
+    const d = new Date(ts);
+    const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    if(sameDay){
+      return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+    }
+    return d.toLocaleDateString([], {month:"short", day:"numeric"});
+  }
+
+  function render(){
+    const q = searchInput.value.trim().toLowerCase();
+    const visible = state.notes.filter(n =>
+      !q || n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q)
+    ).sort((a,b)=> b.updated - a.updated);
+
+    board.innerHTML = "";
+
+    const total = state.notes.length;
+    counter.textContent = total + (total === 1 ? " note" : " notes");
+
+    if(visible.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      if(total === 0){
+        empty.innerHTML = '<div class="big">🗒️</div><h2>No sticky notes yet</h2><p>Click “New note” to jot something down.</p>';
+      }else{
+        empty.innerHTML = '<div class="big">🔎</div><h2>No matches</h2><p>Try a different search term.</p>';
+      }
+      board.appendChild(empty);
+      return;
+    }
+
+    visible.forEach(note => board.appendChild(buildNote(note)));
+  }
+
+  function buildNote(note){
+    const el = document.createElement("div");
+    el.className = "note";
+
+    const title = document.createElement("div");
+    title.className = "title";
+    title.contentEditable = "true";
+    title.spellcheck = false;
+    title.dataset.ph = "Title";
+    title.textContent = note.title;
+
+    const body = document.createElement("div");
+    body.className = "body";
+    body.contentEditable = "true";
+    body.dataset.ph = "Write something…";
+    body.textContent = note.body;
+
+    const foot = document.createElement("div");
+    foot.className = "foot";
+
+    const time = document.createElement("span");
+    time.textContent = fmtTime(note.updated);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const dupBtn = document.createElement("button");
+    dupBtn.textContent = "⧉";
+    dupBtn.title = "Duplicate note";
+    dupBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const copy = { id: uid(), title: note.title, body: note.body, updated: Date.now() };
+      state.notes.push(copy);
+      save(); render();
+    });
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "del";
+    delBtn.textContent = "✕";
+    delBtn.title = "Delete note";
+    delBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      state.notes = state.notes.filter(n => n.id !== note.id);
+      save(); render();
+    });
+
+    actions.appendChild(dupBtn);
+    actions.appendChild(delBtn);
+    foot.appendChild(time);
+    foot.appendChild(actions);
+
+    el.appendChild(title);
+    el.appendChild(body);
+    el.appendChild(foot);
+
+    function persistField(field, value){
+      const target = state.notes.find(n => n.id === note.id);
+      if(!target) return;
+      if(target[field] === value) return;
+      target[field] = value;
+      target.updated = Date.now();
+      time.textContent = fmtTime(target.updated);
+      save();
+    }
+
+    title.addEventListener("input", ()=> persistField("title", title.textContent));
+    body.addEventListener("input", ()=> persistField("body", body.textContent));
+
+    function onKey(e){
+      if(e.key === "Enter" && !e.shiftKey && e.target === title){
+        e.preventDefault();
+        body.focus();
+      }
+    }
+    title.addEventListener("keydown", onKey);
+
+    el.addEventListener("focusin", ()=>{
+      if(state.notes.length > 1){
+        const idx = state.notes.findIndex(n => n.id === note.id);
+        if(idx > -1){
+          const [moved] = state.notes.splice(idx,1);
+          state.notes.push(moved);
+        }
+      }
+    });
+
+    return el;
+  }
+
+  function addNote(focusNew){
+    const note = { id: uid(), title: "", body: "", updated: Date.now() };
+    state.notes.push(note);
+    save();
+    searchInput.value = "";
+    render();
+    if(focusNew !== false){
+      const first = board.querySelector(".note .title");
+      if(first) first.focus();
+    }
+  }
+
+  addBtn.addEventListener("click", ()=> addNote(true));
+
+  searchInput.addEventListener("input", ()=>{
+    render();
+    save();
+  });
+
+  themeBtn.addEventListener("click", ()=>{
+    const cur = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+    const next = cur === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    state.theme = next;
+    save();
+  });
+
+  document.addEventListener("keydown", (e)=>{
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n"){
+      e.preventDefault();
+      addNote(true);
+    }
+    if(e.key === "Escape"){
+      if(document.activeElement && document.activeElement.isContentEditable){
+        document.activeElement.blur();
+      }
+    }
+  });
+
+  load();
+  applyTheme();
+  searchInput.value = state.search || "";
+  render();
+})();
+</script>
+</body>
+</html>
