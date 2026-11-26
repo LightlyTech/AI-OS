@@ -2,61 +2,61 @@
   "Applications": [
     {
       "type": "html",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Sci](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Sci) Calculator.html"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Sci Calculator.html"
     },
     {
       "type": "image",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Sci](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Sci) Calculator.png"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Sci Calculator.png"
     },
     {
       "type": "html",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calculator.html](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calculator.html)"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calculator.html"
     },
     {
       "type": "image",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calculator.png](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calculator.png)"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calculator.png"
     },
     {
       "type": "html",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calendar.html](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calendar.html)"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calendar.html"
     },
     {
       "type": "image",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calendar.png](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calendar.png)"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Calendar.png"
     },
     {
       "type": "html",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Ledger.html](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Ledger.html)"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Ledger.html"
     },
     {
       "type": "image",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Ledger.png](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Ledger.png)"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Ledger.png"
     },
     {
       "type": "html",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/sticky](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/sticky) note.html"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/sticky note.html"
     },
     {
       "type": "image",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/sticky](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/sticky) note.png"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/sticky note.png"
     }
   ],
   "Games": [
     {
       "type": "html",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Pelican](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Pelican) on a Bicycle.html"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Pelican on a Bicycle.html"
     },
     {
       "type": "image",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Pelican](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Pelican) on a Bicycle.png"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Pelican on a Bicycle.png"
     },
     {
       "type": "html",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Saltline.html](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Saltline.html)"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Saltline.html"
     },
     {
       "type": "image",
-      "name": "[https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Saltline.png](https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Saltline.png)"
+      "name": "https://github.com/LightlyTech/AI-OS/blob/main/Htmls/Saltline.png"
     }
   ]
 }
